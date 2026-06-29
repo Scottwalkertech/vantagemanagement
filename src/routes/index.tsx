@@ -9,7 +9,7 @@ import { resolveAsset } from "@/lib/assets";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Vantage — Talent Management" },
+      { title: "Vantage — Talent Management for the Cultural Vanguard" },
       {
         name: "description",
         content:
@@ -21,8 +21,19 @@ export const Route = createFileRoute("/")({
         content:
           "Representing the vanguard of digital creators and sonic architects globally.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "/" },
       { property: "og:image", content: heroImg },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Vantage — Talent Management" },
+      {
+        name: "twitter:description",
+        content:
+          "Representing the vanguard of digital creators and sonic architects globally.",
+      },
+      { name: "twitter:image", content: heroImg },
     ],
+    links: [{ rel: "canonical", href: "/" }],
   }),
   loader: ({ context }) => {
     context.queryClient.prefetchQuery(artistsQuery);

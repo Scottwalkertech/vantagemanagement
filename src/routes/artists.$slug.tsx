@@ -5,19 +5,48 @@ import { artistBySlugQuery, artistsQuery } from "@/lib/queries";
 import { resolveAsset } from "@/lib/assets";
 
 export const Route = createFileRoute("/artists/$slug")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `${formatName(params.slug)} — Vantage` },
-      {
-        name: "description",
-        content: `${formatName(params.slug)} — represented by Vantage Management.`,
-      },
-      { property: "og:title", content: `${formatName(params.slug)} — Vantage` },
-    ],
-  }),
+  head: ({ params, loaderData }) => {
+    const artist = loaderData as { name?: string; short_bio?: string | null; discipline?: string | null; cover_image?: string | null } | undefined;
+    const name = artist?.name ?? formatName(params.slug);
+    const title = `${name} — Vantage`;
+    const description =
+      artist?.short_bio ??
+      `${name}${artist?.discipline ? ` — ${artist.discipline}` : ""}. Represented by Vantage Management.`;
+    const image = artist?.cover_image ? resolveAsset(artist.cover_image) : undefined;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "profile" },
+        { property: "og:url", content: `/artists/${params.slug}` },
+        ...(image ? [{ property: "og:image", content: image }] : []),
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        ...(image ? [{ name: "twitter:image", content: image }] : []),
+      ],
+      links: [{ rel: "canonical", href: `/artists/${params.slug}` }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Person",
+            name,
+            jobTitle: artist?.discipline ?? undefined,
+            description,
+            image: image ?? undefined,
+          }),
+        },
+      ],
+    };
+  },
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(artistBySlugQuery(params.slug));
+    const artist = await context.queryClient.ensureQueryData(artistBySlugQuery(params.slug));
     context.queryClient.prefetchQuery(artistsQuery);
+    return artist;
   },
   notFoundComponent: () => <ArtistNotFound />,
   errorComponent: ({ error }) => (

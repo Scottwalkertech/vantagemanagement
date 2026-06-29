@@ -121,6 +121,7 @@ export type Database = {
       }
       inquiries: {
         Row: {
+          artist_id: string | null
           budget: string | null
           created_at: string
           email: string
@@ -133,6 +134,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          artist_id?: string | null
           budget?: string | null
           created_at?: string
           email: string
@@ -145,6 +147,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          artist_id?: string | null
           budget?: string | null
           created_at?: string
           email?: string
@@ -156,7 +159,15 @@ export type Database = {
           project_type?: string | null
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       testimonials: {
         Row: {

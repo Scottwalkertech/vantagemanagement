@@ -22,7 +22,17 @@ export const Route = createFileRoute("/contact")({
         content:
           "Brand campaigns, festival headliners, editorial, scoring, partnerships — start a brief.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "/contact" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Booking & Inquiries — Vantage" },
+      {
+        name: "twitter:description",
+        content:
+          "Brand campaigns, festival headliners, editorial, scoring, partnerships — start a brief.",
+      },
     ],
+    links: [{ rel: "canonical", href: "/contact" }],
   }),
   component: ContactPage,
 });

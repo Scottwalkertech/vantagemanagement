@@ -5,7 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { artistsQuery } from "@/lib/queries";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -41,6 +43,7 @@ const schema = z.object({
   name: z.string().trim().min(1, "Required").max(120),
   email: z.string().trim().email("Invalid email").max(255),
   organization: z.string().trim().max(160).optional().or(z.literal("")),
+  artist_id: z.string().uuid().optional().or(z.literal("")),
   project_type: z.string().max(80).optional().or(z.literal("")),
   budget: z.string().max(80).optional().or(z.literal("")),
   event_date: z.string().optional().or(z.literal("")),
@@ -60,6 +63,7 @@ const PROJECT_TYPES = [
 
 function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const { data: artists = [] } = useQuery(artistsQuery);
   const {
     register,
     handleSubmit,
@@ -67,7 +71,7 @@ function ContactPage() {
     reset,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { project_type: "" },
+    defaultValues: { project_type: "", artist_id: "" },
   });
 
   const onSubmit = async (values: FormValues) => {
@@ -75,6 +79,7 @@ function ContactPage() {
       name: values.name,
       email: values.email,
       organization: values.organization || null,
+      artist_id: values.artist_id || null,
       project_type: values.project_type || null,
       budget: values.budget || null,
       event_date: values.event_date || null,
@@ -128,6 +133,19 @@ function ContactPage() {
             <Input label="Your Name" error={errors.name?.message} {...register("name")} />
             <Input label="Email" type="email" error={errors.email?.message} {...register("email")} />
             <Input label="Organization" error={errors.organization?.message} {...register("organization")} />
+
+            <Select
+              label="Artist of Interest"
+              error={errors.artist_id?.message}
+              {...register("artist_id")}
+            >
+              <option value="">No preference / open to suggestions</option>
+              {artists.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name} — {a.discipline}
+                </option>
+              ))}
+            </Select>
 
             <div className="grid gap-8 sm:grid-cols-2">
               <Select

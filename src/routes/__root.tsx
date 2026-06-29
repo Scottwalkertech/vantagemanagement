@@ -6,25 +6,30 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { supabase } from "@/integrations/supabase/client";
+import { Header } from "@/components/site/Header";
+import { Footer } from "@/components/site/Footer";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-screen items-center justify-center bg-obsidian px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+        <h1 className="font-display text-7xl font-extrabold uppercase italic text-gold">404</h1>
+        <h2 className="mt-4 font-display text-xl uppercase tracking-tight text-pearl">Off the roster</h2>
+        <p className="mt-2 text-sm text-pearl/60">
+          That page isn&apos;t in our book. Try the index.
         </p>
         <div className="mt-6">
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center bg-gold px-6 py-3 font-display text-xs font-bold uppercase tracking-widest text-obsidian"
           >
             Go home
           </Link>
@@ -42,27 +47,27 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-screen items-center justify-center bg-obsidian px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+        <h1 className="font-display text-xl uppercase tracking-tight text-pearl">
+          This page didn&apos;t load
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+        <p className="mt-2 text-sm text-pearl/60">
+          Something went wrong on our end. Try refreshing or head home.
         </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <button
             onClick={() => {
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center bg-gold px-6 py-3 font-display text-xs font-bold uppercase tracking-widest text-obsidian"
           >
             Try again
           </button>
           <a
             href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            className="inline-flex items-center justify-center border border-pearl/20 px-6 py-3 font-display text-xs font-bold uppercase tracking-widest text-pearl"
           >
             Go home
           </a>
@@ -77,19 +82,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Vantage — Talent Management" },
+      {
+        name: "description",
+        content:
+          "Vantage is a talent management agency representing the vanguard of musicians, performers, and digital creators.",
+      },
+      { name: "author", content: "Vantage Management" },
+      { property: "og:title", content: "Vantage — Talent Management" },
+      {
+        property: "og:description",
+        content:
+          "Talent management for the cultural vanguard — musicians, performers, and digital creators.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap",
       },
     ],
   }),
@@ -101,11 +116,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="bg-obsidian">
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="bg-obsidian text-pearl">
         {children}
         <Scripts />
       </body>
@@ -115,11 +130,28 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const hideChrome = pathname.startsWith("/auth") || pathname.startsWith("/_authenticated");
+
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        router.invalidate();
+        if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, [router, queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      {!hideChrome && <Header />}
+      <main className={hideChrome ? "" : "pt-16"}>
+        <Outlet />
+      </main>
+      {!hideChrome && <Footer />}
+      <Toaster theme="dark" position="top-center" />
     </QueryClientProvider>
   );
 }

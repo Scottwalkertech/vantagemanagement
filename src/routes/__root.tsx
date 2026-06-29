@@ -97,6 +97,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Vantage — Talent Management" },
+      { name: "description", content: "Agent Spotlight Hub showcases talent, clients, and agent expertise with engaging multimedia and interactive features." },
+      { property: "og:description", content: "Agent Spotlight Hub showcases talent, clients, and agent expertise with engaging multimedia and interactive features." },
+      { name: "twitter:description", content: "Agent Spotlight Hub showcases talent, clients, and agent expertise with engaging multimedia and interactive features." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/ZJvwrWhJe0gnHY1HSmHnVQW3hny2/social-images/social-1782755082748-IMG_6075.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/ZJvwrWhJe0gnHY1HSmHnVQW3hny2/social-images/social-1782755082748-IMG_6075.webp" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

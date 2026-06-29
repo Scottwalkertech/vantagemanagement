@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -278,14 +278,13 @@ function AgentAdmin() {
   const [form, setForm] = useState({
     name: "", title: "", headshot_url: "", story: "", philosophy: "", years_experience: "", focus: "",
   });
-  // sync once
-  useState(() => {
+  useEffect(() => {
     if (data) setForm({
       name: data.name, title: data.title, headshot_url: data.headshot_url ?? "",
       story: data.story ?? "", philosophy: data.philosophy ?? "",
       years_experience: data.years_experience ?? "", focus: data.focus ?? "",
     });
-  });
+  }, [data]);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();

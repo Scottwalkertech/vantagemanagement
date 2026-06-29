@@ -6,13 +6,14 @@ import { resolveAsset } from "@/lib/assets";
 
 export const Route = createFileRoute("/artists/$slug")({
   head: ({ params, loaderData }) => {
-    const artist = loaderData as { name?: string; short_bio?: string | null; discipline?: string | null; cover_image?: string | null } | undefined;
+    const artist = loaderData as { name?: string; short_bio?: string | null; discipline?: string | null; cover_image?: string | null; gallery?: string[] | null } | undefined;
     const name = artist?.name ?? formatName(params.slug);
     const title = `${name} — Vantage`;
     const description =
       artist?.short_bio ??
       `${name}${artist?.discipline ? ` — ${artist.discipline}` : ""}. Represented by Vantage Management.`;
-    const image = artist?.cover_image ? resolveAsset(artist.cover_image) : undefined;
+    const ogSource = artist?.cover_image ?? artist?.gallery?.[0] ?? null;
+    const image = ogSource ? resolveAsset(ogSource) : undefined;
     return {
       meta: [
         { title },

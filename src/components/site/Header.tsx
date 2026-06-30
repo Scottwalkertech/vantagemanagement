@@ -5,6 +5,9 @@ import { Menu, X } from "lucide-react";
 const NAV = [
   { to: "/", label: "Index" },
   { to: "/artists", label: "Roster" },
+  { to: "/shop", label: "Shop" },
+  { to: "/track-record", label: "Record" },
+  { to: "/charity", label: "Charity" },
   { to: "/about", label: "Agent" },
   { to: "/contact", label: "Booking" },
 ] as const;
@@ -24,7 +27,7 @@ export function Header() {
         <Link to="/" className="font-display text-xl font-extrabold uppercase italic tracking-tighter text-pearl">
           Vantage.
         </Link>
-        <div className="hidden items-center gap-8 md:flex">
+        <div className="hidden items-center gap-6 lg:flex">
           {NAV.map((n) => (
             <Link
               key={n.to}
@@ -39,7 +42,7 @@ export function Header() {
         </div>
         <button
           aria-label="Toggle menu"
-          className="md:hidden"
+          className="lg:hidden"
           onClick={() => setOpen((v) => !v)}
         >
           {open ? <X size={20} /> : <Menu size={20} />}
@@ -48,13 +51,13 @@ export function Header() {
 
       {open && (
         <div className="fixed inset-0 z-40 flex flex-col bg-obsidian/95 pt-24 backdrop-blur-xl">
-          <div className="flex flex-col gap-8 px-8">
+          <div className="flex flex-col gap-6 px-8">
             {NAV.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
                 onClick={() => setOpen(false)}
-                className="font-display text-4xl uppercase italic tracking-tight text-pearl"
+                className="font-display text-3xl uppercase italic tracking-tight text-pearl"
                 activeProps={{ className: "text-gold" }}
                 activeOptions={{ exact: n.to === "/" }}
               >

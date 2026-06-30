@@ -98,6 +98,83 @@ export type Database = {
         }
         Relationships: []
       }
+      awards_records: {
+        Row: {
+          artist_id: string | null
+          award_body: string
+          category: string
+          created_at: string
+          id: string
+          sort_order: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          artist_id?: string | null
+          award_body: string
+          category: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          artist_id?: string | null
+          award_body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "awards_records_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      charity_works: {
+        Row: {
+          completed_on: string | null
+          created_at: string
+          evidence_images: string[]
+          id: string
+          organization: string
+          sort_order: number
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed_on?: string | null
+          created_at?: string
+          evidence_images?: string[]
+          id?: string
+          organization: string
+          sort_order?: number
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed_on?: string | null
+          created_at?: string
+          evidence_images?: string[]
+          id?: string
+          organization?: string
+          sort_order?: number
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           created_at: string
@@ -162,6 +239,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "inquiries_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          artist_id: string | null
+          category: string
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_published: boolean
+          price: number
+          sort_order: number
+          stock: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          artist_id?: string | null
+          category?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          price?: number
+          sort_order?: number
+          stock?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string | null
+          category?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          price?: number
+          sort_order?: number
+          stock?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
             referencedRelation: "artists"

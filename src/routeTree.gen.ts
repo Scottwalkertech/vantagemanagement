@@ -9,8 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrackRecordRouteImport } from './routes/track-record'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ShopRouteImport } from './routes/shop'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CharityRouteImport } from './routes/charity'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ArtistsRouteImport } from './routes/artists'
 import { Route as AboutRouteImport } from './routes/about'
@@ -20,14 +23,29 @@ import { Route as ArtistsIndexRouteImport } from './routes/artists.index'
 import { Route as ArtistsSlugRouteImport } from './routes/artists.$slug'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 
+const TrackRecordRoute = TrackRecordRouteImport.update({
+  id: '/track-record',
+  path: '/track-record',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopRoute = ShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CharityRoute = CharityRouteImport.update({
+  id: '/charity',
+  path: '/charity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -75,8 +93,11 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/artists': typeof ArtistsRouteWithChildren
   '/auth': typeof AuthRoute
+  '/charity': typeof CharityRoute
   '/contact': typeof ContactRoute
+  '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/track-record': typeof TrackRecordRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/artists/$slug': typeof ArtistsSlugRoute
   '/artists/': typeof ArtistsIndexRoute
@@ -85,8 +106,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/charity': typeof CharityRoute
   '/contact': typeof ContactRoute
+  '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/track-record': typeof TrackRecordRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/artists/$slug': typeof ArtistsSlugRoute
   '/artists': typeof ArtistsIndexRoute
@@ -98,8 +122,11 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/artists': typeof ArtistsRouteWithChildren
   '/auth': typeof AuthRoute
+  '/charity': typeof CharityRoute
   '/contact': typeof ContactRoute
+  '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/track-record': typeof TrackRecordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/artists/$slug': typeof ArtistsSlugRoute
   '/artists/': typeof ArtistsIndexRoute
@@ -111,8 +138,11 @@ export interface FileRouteTypes {
     | '/about'
     | '/artists'
     | '/auth'
+    | '/charity'
     | '/contact'
+    | '/shop'
     | '/sitemap.xml'
+    | '/track-record'
     | '/admin'
     | '/artists/$slug'
     | '/artists/'
@@ -121,8 +151,11 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/charity'
     | '/contact'
+    | '/shop'
     | '/sitemap.xml'
+    | '/track-record'
     | '/admin'
     | '/artists/$slug'
     | '/artists'
@@ -133,8 +166,11 @@ export interface FileRouteTypes {
     | '/about'
     | '/artists'
     | '/auth'
+    | '/charity'
     | '/contact'
+    | '/shop'
     | '/sitemap.xml'
+    | '/track-record'
     | '/_authenticated/admin'
     | '/artists/$slug'
     | '/artists/'
@@ -146,12 +182,22 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ArtistsRoute: typeof ArtistsRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CharityRoute: typeof CharityRoute
   ContactRoute: typeof ContactRoute
+  ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TrackRecordRoute: typeof TrackRecordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/track-record': {
+      id: '/track-record'
+      path: '/track-record'
+      fullPath: '/track-record'
+      preLoaderRoute: typeof TrackRecordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -159,11 +205,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shop': {
+      id: '/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof ShopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/charity': {
+      id: '/charity'
+      path: '/charity'
+      fullPath: '/charity'
+      preLoaderRoute: typeof CharityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -255,8 +315,11 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ArtistsRoute: ArtistsRouteWithChildren,
   AuthRoute: AuthRoute,
+  CharityRoute: CharityRoute,
   ContactRoute: ContactRoute,
+  ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TrackRecordRoute: TrackRecordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

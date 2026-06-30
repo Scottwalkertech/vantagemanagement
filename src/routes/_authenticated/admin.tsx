@@ -9,6 +9,12 @@ import {
   clientsQuery,
   testimonialsQuery,
 } from "@/lib/queries";
+import {
+  allProductsQuery,
+  awardsQuery,
+  charityWorksQuery,
+  PRODUCT_CATEGORIES,
+} from "@/lib/shop-queries";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,

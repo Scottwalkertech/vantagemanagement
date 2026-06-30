@@ -20,7 +20,18 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type Tab = "artists" | "testimonials" | "agent" | "inquiries" | "clients";
+type Tab = "artists" | "testimonials" | "agent" | "inquiries" | "clients" | "store" | "charity" | "awards";
+
+const TABS: { value: Tab; label: string }[] = [
+  { value: "artists", label: "Roster" },
+  { value: "store", label: "Store Manager" },
+  { value: "charity", label: "Charity Actions" },
+  { value: "awards", label: "Awards & Records" },
+  { value: "testimonials", label: "Testimonials" },
+  { value: "agent", label: "Agent Bio" },
+  { value: "clients", label: "Clients" },
+  { value: "inquiries", label: "Inquiries" },
+];
 
 function AdminPage() {
   const navigate = useNavigate();
@@ -43,21 +54,24 @@ function AdminPage() {
       </header>
 
       <nav className="flex flex-wrap gap-2 border-b border-pearl/10 px-6 py-3">
-        {(["artists", "testimonials", "agent", "clients", "inquiries"] as Tab[]).map((t) => (
+        {TABS.map((t) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={t.value}
+            onClick={() => setTab(t.value)}
             className={`px-3 py-1 text-[10px] uppercase tracking-[0.3em] ${
-              tab === t ? "bg-gold text-obsidian" : "text-pearl/60 hover:text-gold"
+              tab === t.value ? "bg-gold text-obsidian" : "text-pearl/60 hover:text-gold"
             }`}
           >
-            {t}
+            {t.label}
           </button>
         ))}
       </nav>
 
       <div className="px-6 py-8">
         {tab === "artists" && <ArtistsAdmin />}
+        {tab === "store" && <StoreAdmin />}
+        {tab === "charity" && <CharityAdmin />}
+        {tab === "awards" && <AwardsAdmin />}
         {tab === "testimonials" && <TestimonialsAdmin />}
         {tab === "agent" && <AgentAdmin />}
         {tab === "clients" && <ClientsAdmin />}

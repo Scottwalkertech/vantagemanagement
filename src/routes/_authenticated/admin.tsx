@@ -153,6 +153,9 @@ function ArtistForm({ id, onClose }: { id: string | null; onClose: () => void })
     slug: existing?.slug ?? "",
     name: existing?.name ?? "",
     discipline: existing?.discipline ?? "",
+    industry: existing?.industry ?? "Music",
+    representation_status: existing?.representation_status ?? "Active",
+    live_photo_url: existing?.live_photo_url ?? "",
     short_bio: existing?.short_bio ?? "",
     bio: existing?.bio ?? "",
     achievements: (existing?.achievements ?? []).join("\n"),
@@ -160,6 +163,7 @@ function ArtistForm({ id, onClose }: { id: string | null; onClose: () => void })
     gallery: (existing?.gallery ?? []).join("\n"),
     sort_order: existing?.sort_order ?? 99,
   });
+
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();

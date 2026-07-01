@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrackRecordRouteImport } from './routes/track-record'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ShopRouteImport } from './routes/shop'
+import { Route as RosterRouteImport } from './routes/roster'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CharityRouteImport } from './routes/charity'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -36,6 +37,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RosterRoute = RosterRouteImport.update({
+  id: '/roster',
+  path: '/roster',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/charity': typeof CharityRoute
   '/contact': typeof ContactRoute
+  '/roster': typeof RosterRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/track-record': typeof TrackRecordRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/charity': typeof CharityRoute
   '/contact': typeof ContactRoute
+  '/roster': typeof RosterRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/track-record': typeof TrackRecordRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/charity': typeof CharityRoute
   '/contact': typeof ContactRoute
+  '/roster': typeof RosterRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/track-record': typeof TrackRecordRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/charity'
     | '/contact'
+    | '/roster'
     | '/shop'
     | '/sitemap.xml'
     | '/track-record'
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/charity'
     | '/contact'
+    | '/roster'
     | '/shop'
     | '/sitemap.xml'
     | '/track-record'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/charity'
     | '/contact'
+    | '/roster'
     | '/shop'
     | '/sitemap.xml'
     | '/track-record'
@@ -184,6 +196,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CharityRoute: typeof CharityRoute
   ContactRoute: typeof ContactRoute
+  RosterRoute: typeof RosterRoute
   ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TrackRecordRoute: typeof TrackRecordRoute
@@ -210,6 +223,13 @@ declare module '@tanstack/react-router' {
       path: '/shop'
       fullPath: '/shop'
       preLoaderRoute: typeof ShopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roster': {
+      id: '/roster'
+      path: '/roster'
+      fullPath: '/roster'
+      preLoaderRoute: typeof RosterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -317,6 +337,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CharityRoute: CharityRoute,
   ContactRoute: ContactRoute,
+  RosterRoute: RosterRoute,
   ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TrackRecordRoute: TrackRecordRoute,

@@ -13,6 +13,10 @@ export type Artist = {
   gallery: string[];
   sort_order: number;
   is_published: boolean;
+  industry: string;
+  live_photo_url: string | null;
+  representation_status: string;
+
 };
 
 export type Testimonial = {

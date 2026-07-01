@@ -4,13 +4,15 @@ import { Menu, X } from "lucide-react";
 
 const NAV = [
   { to: "/", label: "Index" },
-  { to: "/artists", label: "Roster" },
+  { to: "/roster", label: "Roster" },
+  { to: "/artists", label: "Music" },
   { to: "/shop", label: "Shop" },
   { to: "/track-record", label: "Record" },
   { to: "/charity", label: "Charity" },
   { to: "/about", label: "Agent" },
   { to: "/contact", label: "Booking" },
 ] as const;
+
 
 export function Header() {
   const [open, setOpen] = useState(false);

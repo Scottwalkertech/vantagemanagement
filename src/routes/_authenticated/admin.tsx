@@ -153,6 +153,9 @@ function ArtistForm({ id, onClose }: { id: string | null; onClose: () => void })
     slug: existing?.slug ?? "",
     name: existing?.name ?? "",
     discipline: existing?.discipline ?? "",
+    industry: existing?.industry ?? "Music",
+    representation_status: existing?.representation_status ?? "Active",
+    live_photo_url: existing?.live_photo_url ?? "",
     short_bio: existing?.short_bio ?? "",
     bio: existing?.bio ?? "",
     achievements: (existing?.achievements ?? []).join("\n"),
@@ -160,6 +163,7 @@ function ArtistForm({ id, onClose }: { id: string | null; onClose: () => void })
     gallery: (existing?.gallery ?? []).join("\n"),
     sort_order: existing?.sort_order ?? 99,
   });
+
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,10 +191,24 @@ function ArtistForm({ id, onClose }: { id: string | null; onClose: () => void })
         <AInput label="Name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
         <AInput label="Slug" value={form.slug} onChange={(v) => setForm({ ...form, slug: v })} />
         <AInput label="Discipline" value={form.discipline} onChange={(v) => setForm({ ...form, discipline: v })} />
+        <ASelect
+          label="Industry"
+          value={form.industry}
+          onChange={(v) => setForm({ ...form, industry: v })}
+          options={["Music", "Film & TV", "Sports", "Literary", "Digital Creators"]}
+        />
+        <ASelect
+          label="Representation status"
+          value={form.representation_status}
+          onChange={(v) => setForm({ ...form, representation_status: v })}
+          options={["Active", "On Hold", "Alumni"]}
+        />
         <AInput label="Sort order" value={String(form.sort_order)} onChange={(v) => setForm({ ...form, sort_order: Number(v) })} />
         <AInput label="Cover image URL" value={form.cover_image} onChange={(v) => setForm({ ...form, cover_image: v })} className="md:col-span-2" />
+        <AInput label="Live photo URL" value={form.live_photo_url} onChange={(v) => setForm({ ...form, live_photo_url: v })} className="md:col-span-2" />
       </div>
       <ATextarea label="Short bio (1 line)" value={form.short_bio} onChange={(v) => setForm({ ...form, short_bio: v })} rows={2} />
+
       <ATextarea label="Full bio" value={form.bio} onChange={(v) => setForm({ ...form, bio: v })} rows={5} />
       <ATextarea label="Achievements (one per line)" value={form.achievements} onChange={(v) => setForm({ ...form, achievements: v })} rows={4} />
       <ATextarea label="Gallery (one URL per line)" value={form.gallery} onChange={(v) => setForm({ ...form, gallery: v })} rows={3} />
@@ -420,6 +438,26 @@ function ATextarea({
     </div>
   );
 }
+
+function ASelect({
+  label, value, onChange, options, className = "",
+}: { label: string; value: string; onChange: (v: string) => void; options: string[]; className?: string }) {
+  return (
+    <div className={className}>
+      <label className="mb-1 block text-[10px] uppercase tracking-[0.3em] text-pearl/50">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full border-b border-pearl/20 bg-obsidian py-2 focus:border-gold focus:outline-none"
+      >
+        {options.map((o) => (
+          <option key={o} value={o}>{o}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 
 function StoreAdmin() {
   const qc = useQueryClient();

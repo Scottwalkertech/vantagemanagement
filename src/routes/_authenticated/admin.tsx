@@ -439,6 +439,26 @@ function ATextarea({
   );
 }
 
+function ASelect({
+  label, value, onChange, options, className = "",
+}: { label: string; value: string; onChange: (v: string) => void; options: string[]; className?: string }) {
+  return (
+    <div className={className}>
+      <label className="mb-1 block text-[10px] uppercase tracking-[0.3em] text-pearl/50">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full border-b border-pearl/20 bg-obsidian py-2 focus:border-gold focus:outline-none"
+      >
+        {options.map((o) => (
+          <option key={o} value={o}>{o}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+
 function StoreAdmin() {
   const qc = useQueryClient();
   const { data: products = [] } = useQuery(allProductsQuery);

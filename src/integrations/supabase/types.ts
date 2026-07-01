@@ -59,8 +59,11 @@ export type Database = {
           discipline: string
           gallery: string[]
           id: string
+          industry: string
           is_published: boolean
+          live_photo_url: string | null
           name: string
+          representation_status: string
           short_bio: string | null
           slug: string
           sort_order: number
@@ -74,8 +77,11 @@ export type Database = {
           discipline: string
           gallery?: string[]
           id?: string
+          industry?: string
           is_published?: boolean
+          live_photo_url?: string | null
           name: string
+          representation_status?: string
           short_bio?: string | null
           slug: string
           sort_order?: number
@@ -89,8 +95,11 @@ export type Database = {
           discipline?: string
           gallery?: string[]
           id?: string
+          industry?: string
           is_published?: boolean
+          live_photo_url?: string | null
           name?: string
+          representation_status?: string
           short_bio?: string | null
           slug?: string
           sort_order?: number

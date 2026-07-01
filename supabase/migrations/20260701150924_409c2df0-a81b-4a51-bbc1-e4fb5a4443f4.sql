@@ -1,0 +1,4 @@
+ALTER TABLE public.artists
+  ADD COLUMN IF NOT EXISTS industry TEXT NOT NULL DEFAULT 'Music',
+  ADD COLUMN IF NOT EXISTS live_photo_url TEXT,
+  ADD COLUMN IF NOT EXISTS representation_status TEXT NOT NULL DEFAULT 'Active';

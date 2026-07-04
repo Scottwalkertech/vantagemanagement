@@ -16,6 +16,7 @@ export type Artist = {
   industry: string;
   live_photo_url: string | null;
   representation_status: string;
+  press_kit_url: string | null;
 
 };
 

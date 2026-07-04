@@ -265,8 +265,10 @@ function ArtistDossier() {
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a
-                  href={`/press/${artist.slug}.pdf`}
-                  download
+                  href={artist.press_kit_url || `/press/${artist.slug}.pdf`}
+                  download={!artist.press_kit_url}
+                  target={artist.press_kit_url ? "_blank" : undefined}
+                  rel={artist.press_kit_url ? "noopener noreferrer" : undefined}
                   className="inline-flex items-center justify-center gap-3 bg-gold px-6 py-4 font-display text-[10px] font-bold uppercase tracking-[0.35em] text-obsidian transition-colors hover:bg-gold/90"
                 >
                   <Download size={14} /> Download Press Kit PDF

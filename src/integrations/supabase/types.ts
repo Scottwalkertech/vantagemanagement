@@ -63,6 +63,7 @@ export type Database = {
           is_published: boolean
           live_photo_url: string | null
           name: string
+          press_kit_url: string | null
           representation_status: string
           short_bio: string | null
           slug: string
@@ -81,6 +82,7 @@ export type Database = {
           is_published?: boolean
           live_photo_url?: string | null
           name: string
+          press_kit_url?: string | null
           representation_status?: string
           short_bio?: string | null
           slug: string
@@ -99,6 +101,7 @@ export type Database = {
           is_published?: boolean
           live_photo_url?: string | null
           name?: string
+          press_kit_url?: string | null
           representation_status?: string
           short_bio?: string | null
           slug?: string

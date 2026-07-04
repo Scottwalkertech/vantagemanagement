@@ -27,7 +27,7 @@ export const Route = createFileRoute("/roster")({
     ],
     links: [{ rel: "canonical", href: "/roster" }],
   }),
-  loader: ({ context }) => context.queryClient.prefetchQuery(artistsQuery),
+  loader: ({ context }) => context.queryClient.ensureQueryData(artistsQuery),
   component: RosterPage,
 });
 

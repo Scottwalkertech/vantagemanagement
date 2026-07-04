@@ -207,6 +207,7 @@ function ArtistForm({ id, onClose }: { id: string | null; onClose: () => void })
         <AInput label="Sort order" value={String(form.sort_order)} onChange={(v) => setForm({ ...form, sort_order: Number(v) })} />
         <AInput label="Cover image URL" value={form.cover_image} onChange={(v) => setForm({ ...form, cover_image: v })} className="md:col-span-2" />
         <AInput label="Live photo URL" value={form.live_photo_url} onChange={(v) => setForm({ ...form, live_photo_url: v })} className="md:col-span-2" />
+        <AInput label="Press kit URL (PDF)" value={form.press_kit_url} onChange={(v) => setForm({ ...form, press_kit_url: v })} className="md:col-span-2" />
       </div>
       <ATextarea label="Short bio (1 line)" value={form.short_bio} onChange={(v) => setForm({ ...form, short_bio: v })} rows={2} />
 

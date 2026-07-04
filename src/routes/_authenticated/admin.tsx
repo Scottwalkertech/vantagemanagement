@@ -742,7 +742,7 @@ function StoreInventory() {
         })}
         {products.length === 0 && <p className="text-pearl/40">No products yet.</p>}
       </div>
-    </Section>
+    </div>
   );
 }
 

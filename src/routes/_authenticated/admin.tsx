@@ -461,7 +461,143 @@ function ASelect({
 }
 
 
+type StoreSubTab = "inventory" | "linker";
+
 function StoreAdmin() {
+  const [sub, setSub] = useState<StoreSubTab>("inventory");
+  return (
+    <Section title="Store Manager">
+      <div className="mb-6 flex gap-2 border-b border-pearl/10 pb-3">
+        {([
+          { v: "inventory", l: "Inventory" },
+          { v: "linker", l: "Bulk Product Linker" },
+        ] as { v: StoreSubTab; l: string }[]).map((t) => (
+          <button
+            key={t.v}
+            onClick={() => setSub(t.v)}
+            className={`px-3 py-1 text-[10px] uppercase tracking-[0.3em] ${
+              sub === t.v ? "bg-gold text-obsidian" : "text-pearl/60 hover:text-gold"
+            }`}
+          >
+            {t.l}
+          </button>
+        ))}
+      </div>
+      {sub === "inventory" ? <StoreInventory /> : <BulkProductLinker />}
+    </Section>
+  );
+}
+
+function BulkProductLinker() {
+  const qc = useQueryClient();
+  const { data: artists = [] } = useQuery(artistsQuery);
+  const { data: products = [] } = useQuery(allProductsQuery);
+  const [artistId, setArtistId] = useState<string>("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const selectedArtist = artists.find((a) => a.id === artistId);
+  const linkedCount = products.filter((p) => p.artist_id === artistId).length;
+
+  const toggle = async (productId: string, currentArtistId: string | null) => {
+    if (!artistId) {
+      toast.error("Select an artist first");
+      return;
+    }
+    const isLinkedHere = currentArtistId === artistId;
+    const nextValue = isLinkedHere ? null : artistId;
+    setBusyId(productId);
+    const { error } = await supabase
+      .from("products")
+      .update({ artist_id: nextValue })
+      .eq("id", productId);
+    setBusyId(null);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      qc.invalidateQueries({ queryKey: ["products"] });
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-6 border border-pearl/10 p-6">
+        <label className="mb-2 block text-[10px] uppercase tracking-[0.3em] text-pearl/50">
+          Select Artist
+        </label>
+        <select
+          value={artistId}
+          onChange={(e) => setArtistId(e.target.value)}
+          className="w-full border-b border-pearl/20 bg-obsidian py-2 focus:border-gold focus:outline-none"
+        >
+          <option value="">— Choose an artist —</option>
+          {artists.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name} · {a.industry}
+            </option>
+          ))}
+        </select>
+        {selectedArtist && (
+          <p className="mt-3 text-[10px] uppercase tracking-[0.3em] text-pearl/40">
+            [ {String(linkedCount).padStart(2, "0")} products currently linked to {selectedArtist.name} ]
+          </p>
+        )}
+      </div>
+
+      {!artistId ? (
+        <p className="py-16 text-center text-[10px] uppercase tracking-[0.3em] text-pearl/40">
+          Select an artist above to attach or detach products.
+        </p>
+      ) : products.length === 0 ? (
+        <p className="text-pearl/40">No products in the store yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {products.map((p) => {
+            const linkedHere = p.artist_id === artistId;
+            const linkedElsewhere = !!p.artist_id && !linkedHere;
+            const otherName = linkedElsewhere
+              ? artists.find((a) => a.id === p.artist_id)?.name
+              : null;
+            const isBusy = busyId === p.id;
+            return (
+              <label
+                key={p.id}
+                className={`flex cursor-pointer items-center justify-between gap-4 border p-4 transition-colors ${
+                  linkedHere ? "border-gold bg-gold/5" : "border-pearl/10 hover:border-pearl/30"
+                } ${isBusy ? "opacity-50" : ""}`}
+              >
+                <div className="flex items-center gap-4">
+                  <input
+                    type="checkbox"
+                    checked={linkedHere}
+                    disabled={isBusy}
+                    onChange={() => toggle(p.id, p.artist_id)}
+                    className="size-4 accent-[color:hsl(var(--gold))]"
+                  />
+                  <div>
+                    <p className="font-display text-sm uppercase tracking-wide">{p.title}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-pearl/40">
+                      {p.category} · {Number(p.price).toFixed(2)} {p.currency}
+                      {linkedElsewhere && (
+                        <span className="ml-2 text-destructive">
+                          · linked to {otherName} (checking will reassign)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] uppercase tracking-[0.3em] text-pearl/40">
+                  {linkedHere ? "Attached" : linkedElsewhere ? "Elsewhere" : "Unlinked"}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StoreInventory() {
   const qc = useQueryClient();
   const { data: products = [] } = useQuery(allProductsQuery);
   const { data: artists = [] } = useQuery(artistsQuery);

@@ -659,7 +659,7 @@ function StoreInventory() {
   };
 
   return (
-    <Section title="Store Manager">
+    <div>
       <form onSubmit={save} className="mb-8 space-y-3 border border-gold/40 bg-gold/5 p-6">
         <div className="grid gap-3 md:grid-cols-2">
           <AInput label="Title" value={draft.title} onChange={(v) => setDraft({ ...draft, title: v })} />

@@ -1,18 +1,53 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { queryOptions } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight, Award, Download, FileText } from "lucide-react";
 import { artistBySlugQuery, artistsQuery } from "@/lib/queries";
+import { supabase } from "@/integrations/supabase/client";
+import type { Product } from "@/lib/shop-queries";
+import type { AwardRecord } from "@/lib/shop-queries";
 import { resolveAsset } from "@/lib/assets";
+
+const artistProductsQuery = (artistId: string) =>
+  queryOptions({
+    queryKey: ["products", "artist", artistId],
+    queryFn: async (): Promise<Product[]> => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("artist_id", artistId)
+        .eq("is_published", true)
+        .order("sort_order");
+      if (error) throw error;
+      return (data ?? []) as Product[];
+    },
+  });
+
+const artistAwardsQuery = (artistId: string) =>
+  queryOptions({
+    queryKey: ["awards_records", "artist", artistId],
+    queryFn: async (): Promise<AwardRecord[]> => {
+      const { data, error } = await supabase
+        .from("awards_records")
+        .select("*")
+        .eq("artist_id", artistId)
+        .order("year", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as AwardRecord[];
+    },
+  });
 
 export const Route = createFileRoute("/artists/$slug")({
   head: ({ params, loaderData }) => {
-    const artist = loaderData as { name?: string; short_bio?: string | null; discipline?: string | null; cover_image?: string | null; gallery?: string[] | null } | undefined;
+    const artist = loaderData as
+      | { name?: string; short_bio?: string | null; discipline?: string | null; cover_image?: string | null; gallery?: string[] | null; live_photo_url?: string | null }
+      | undefined;
     const name = artist?.name ?? formatName(params.slug);
     const title = `${name} — Vantage`;
     const description =
       artist?.short_bio ??
       `${name}${artist?.discipline ? ` — ${artist.discipline}` : ""}. Represented by Vantage Management.`;
-    const ogSource = artist?.cover_image ?? artist?.gallery?.[0] ?? null;
+    const ogSource = artist?.live_photo_url ?? artist?.cover_image ?? artist?.gallery?.[0] ?? null;
     const image = ogSource ? resolveAsset(ogSource) : undefined;
     return {
       meta: [
@@ -29,24 +64,14 @@ export const Route = createFileRoute("/artists/$slug")({
         ...(image ? [{ name: "twitter:image", content: image }] : []),
       ],
       links: [{ rel: "canonical", href: `/artists/${params.slug}` }],
-      scripts: [
-        {
-          type: "application/ld+json",
-          children: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Person",
-            name,
-            jobTitle: artist?.discipline ?? undefined,
-            description,
-            image: image ?? undefined,
-          }),
-        },
-      ],
     };
   },
   loader: async ({ context, params }) => {
     const artist = await context.queryClient.ensureQueryData(artistBySlugQuery(params.slug));
+    if (!artist) throw notFound();
     context.queryClient.prefetchQuery(artistsQuery);
+    context.queryClient.prefetchQuery(artistProductsQuery(artist.id));
+    context.queryClient.prefetchQuery(artistAwardsQuery(artist.id));
     return artist;
   },
   notFoundComponent: () => <ArtistNotFound />,
@@ -55,7 +80,7 @@ export const Route = createFileRoute("/artists/$slug")({
       <p className="text-pearl/60">Couldn&apos;t load this artist. {error.message}</p>
     </div>
   ),
-  component: ArtistPage,
+  component: ArtistDossier,
 });
 
 function formatName(slug: string) {
@@ -76,119 +101,203 @@ function ArtistNotFound() {
   );
 }
 
-function ArtistPage() {
+function ArtistDossier() {
   const { slug } = Route.useParams();
   const { data: artist } = useQuery(artistBySlugQuery(slug));
   const { data: all = [] } = useQuery(artistsQuery);
 
-  if (!artist) {
-    throw notFound();
-  }
+  if (!artist) throw notFound();
+
+  const { data: products = [] } = useQuery(artistProductsQuery(artist.id));
+  const { data: awards = [] } = useQuery(artistAwardsQuery(artist.id));
 
   const idx = all.findIndex((a) => a.slug === artist.slug);
-  const next = all[(idx + 1) % all.length];
-  const prev = all[(idx - 1 + all.length) % all.length];
+  const next = all.length ? all[(idx + 1) % all.length] : null;
+  const prev = all.length ? all[(idx - 1 + all.length) % all.length] : null;
 
-  const gallery = artist.gallery?.length ? artist.gallery : artist.cover_image ? [artist.cover_image] : [];
+  const heroImage = resolveAsset(artist.live_photo_url || artist.cover_image);
 
   return (
-    <article>
-      {/* HEADER */}
-      <section className="border-b border-pearl/10 px-6 pb-12 pt-12 md:pt-20">
-        <div className="mx-auto max-w-6xl">
+    <article className="bg-obsidian">
+      {/* Breadcrumb bar */}
+      <div className="border-b border-pearl/10 px-6 py-5">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between">
           <Link
-            to="/artists"
+            to="/roster"
             className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-pearl/50 hover:text-gold"
           >
             <ArrowLeft size={12} /> Roster
           </Link>
-          <div className="mt-8 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="mb-3 text-[10px] uppercase tracking-[0.35em] text-gold">
-                {artist.discipline}
+          <span className="text-[10px] uppercase tracking-[0.3em] text-pearl/30">
+            Dossier № {String(idx + 1).padStart(3, "0")}
+          </span>
+        </div>
+      </div>
+
+      {/* Split editorial */}
+      <div className="mx-auto grid max-w-[1600px] grid-cols-1 lg:grid-cols-2">
+        {/* LEFT — sticky visual */}
+        <div className="relative lg:sticky lg:top-0 lg:h-screen">
+          <div className="relative h-[70vh] w-full overflow-hidden lg:h-full">
+            <img
+              src={heroImage}
+              alt={artist.name}
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="eager"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/50 to-obsidian/10" />
+            <div className="absolute inset-x-0 bottom-0 p-8 md:p-12">
+              <p className="mb-4 text-[10px] uppercase tracking-[0.4em] text-gold">
+                {artist.industry || "Music"} — {artist.discipline}
               </p>
-              <h1 className="font-display text-5xl uppercase italic leading-[0.9] md:text-8xl">
+              <h1 className="font-display text-5xl uppercase italic leading-[0.85] text-pearl md:text-7xl xl:text-8xl">
                 {artist.name}
               </h1>
+              <div className="mt-6 flex items-center gap-3">
+                <span className="size-1.5 rounded-full bg-gold" />
+                <span className="text-[10px] uppercase tracking-[0.35em] text-pearl/70">
+                  {artist.representation_status || "Active"} Representation
+                </span>
+              </div>
             </div>
-            <Link
-              to="/contact"
-              className="inline-flex items-center gap-4 self-start bg-gold px-5 py-3 font-display text-[10px] font-bold uppercase tracking-[0.3em] text-obsidian md:self-end"
-            >
-              Book {artist.name.split(" ")[0]} <ArrowRight size={14} />
-            </Link>
           </div>
         </div>
-      </section>
 
-      {/* MAIN */}
-      <section className="mx-auto max-w-6xl px-6 py-16 md:py-24">
-        <div className="grid gap-12 md:grid-cols-12">
-          <div className="md:col-span-7">
-            <div className="aspect-[4/5] overflow-hidden bg-pearl/5">
-              <img
-                src={resolveAsset(artist.cover_image)}
-                alt={artist.name}
-                className="h-full w-full object-cover"
-                loading="eager"
-              />
-            </div>
-          </div>
-
-          <div className="md:col-span-5">
-            <p className="mb-3 text-[10px] uppercase tracking-[0.35em] text-gold">
-              [ Biography ]
-            </p>
-            <p className="font-serif text-xl leading-snug text-pearl/90 md:text-2xl">
-              {artist.short_bio}
-            </p>
-            <div className="mt-8 space-y-5 text-sm leading-relaxed text-pearl/70">
-              {(artist.bio ?? "").split("\n").map((p, i) => (
-                <p key={i}>{p}</p>
-              ))}
-            </div>
-
-            {artist.achievements?.length > 0 && (
-              <div className="mt-12 border-t border-pearl/10 pt-8">
-                <p className="mb-6 text-[10px] uppercase tracking-[0.35em] text-gold">
-                  [ Notable Achievements ]
+        {/* RIGHT — scroll */}
+        <div className="px-6 py-16 md:px-12 md:py-24">
+          <div className="max-w-xl">
+            {/* 1. Biography */}
+            <section>
+              <SectionLabel n="01" title="Biography" />
+              {artist.short_bio && (
+                <p className="mt-6 font-serif text-xl leading-snug text-pearl/90 md:text-2xl">
+                  {artist.short_bio}
                 </p>
-                <ul className="space-y-3">
-                  {artist.achievements.map((a, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-pearl/80">
-                      <span className="mt-1 size-1 shrink-0 rounded-full bg-gold" />
-                      {a}
+              )}
+              <div className="mt-8 space-y-5 text-sm leading-relaxed text-pearl/70">
+                {(artist.bio ?? "").split("\n").filter(Boolean).map((p, i) => (
+                  <p key={i}>{p}</p>
+                ))}
+              </div>
+            </section>
+
+            {/* 2. Awards & Accolades */}
+            <section className="mt-20 border-t border-pearl/10 pt-12">
+              <SectionLabel n="02" title="Awards & Accolades" />
+              {awards.length === 0 && (!artist.achievements || artist.achievements.length === 0) ? (
+                <p className="mt-6 text-sm text-pearl/40">No awards logged yet.</p>
+              ) : (
+                <ul className="mt-8 space-y-5">
+                  {awards.map((a) => (
+                    <li
+                      key={a.id}
+                      className="flex items-start gap-4 border-b border-pearl/5 pb-5 last:border-0"
+                    >
+                      <Award className="mt-0.5 shrink-0 text-gold" size={18} />
+                      <div className="flex-1">
+                        <p className="font-display text-sm uppercase tracking-wider text-pearl">
+                          {a.category}
+                        </p>
+                        <p className="mt-1 text-[11px] uppercase tracking-[0.25em] text-pearl/50">
+                          {a.award_body} — {a.year}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                  {artist.achievements?.map((a, i) => (
+                    <li key={`ach-${i}`} className="flex items-start gap-4 border-b border-pearl/5 pb-5 last:border-0">
+                      <Award className="mt-0.5 shrink-0 text-gold" size={18} />
+                      <p className="text-sm text-pearl/80">{a}</p>
                     </li>
                   ))}
                 </ul>
+              )}
+            </section>
+
+            {/* 3. Curated Collection */}
+            <section className="mt-20 border-t border-pearl/10 pt-12">
+              <SectionLabel n="03" title="Curated Collection" />
+              {products.length === 0 ? (
+                <p className="mt-6 text-sm text-pearl/40">
+                  No products currently attached to this artist.
+                </p>
+              ) : (
+                <div className="mt-8 grid grid-cols-2 gap-4">
+                  {products.map((p) => (
+                    <Link
+                      key={p.id}
+                      to="/shop"
+                      className="group block"
+                    >
+                      <div className="aspect-square overflow-hidden bg-pearl/5">
+                        {p.image_url ? (
+                          <img
+                            src={resolveAsset(p.image_url)}
+                            alt={p.title}
+                            loading="lazy"
+                            className="h-full w-full object-cover grayscale transition-all duration-500 group-hover:grayscale-0"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-[10px] uppercase tracking-widest text-pearl/30">
+                            No image
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-3 font-display text-xs uppercase tracking-[0.2em] text-pearl group-hover:text-gold">
+                        {p.title}
+                      </p>
+                      <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-pearl/50">
+                        {Number(p.price).toFixed(2)} {p.currency}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* 4. Media Relations */}
+            <section className="mt-20 border-t border-pearl/10 pt-12">
+              <SectionLabel n="04" title="Media Relations" />
+              <p className="mt-6 text-sm leading-relaxed text-pearl/70">
+                For press enquiries, interview requests, and editorial features involving{" "}
+                {artist.name}, download the official press kit or contact the Vantage press office
+                directly.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <a
+                  href={`/press/${artist.slug}.pdf`}
+                  download
+                  className="inline-flex items-center justify-center gap-3 bg-gold px-6 py-4 font-display text-[10px] font-bold uppercase tracking-[0.35em] text-obsidian transition-colors hover:bg-gold/90"
+                >
+                  <Download size={14} /> Download Press Kit PDF
+                </a>
+                <Link
+                  to="/contact"
+                  className="inline-flex items-center justify-center gap-3 border border-pearl/20 px-6 py-4 font-display text-[10px] font-bold uppercase tracking-[0.35em] text-pearl transition-colors hover:border-gold hover:text-gold"
+                >
+                  <FileText size={14} /> Press Enquiry
+                </Link>
               </div>
-            )}
+            </section>
+
+            {/* Booking CTA */}
+            <section className="mt-20 border-t border-pearl/10 pt-12">
+              <Link
+                to="/contact"
+                className="group flex items-center justify-between gap-4"
+              >
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.35em] text-gold">Book Talent</p>
+                  <p className="mt-2 font-display text-2xl uppercase italic text-pearl group-hover:text-gold md:text-3xl">
+                    Enquire about {artist.name.split(" ")[0]}
+                  </p>
+                </div>
+                <ArrowRight className="text-pearl/40 group-hover:text-gold" />
+              </Link>
+            </section>
           </div>
         </div>
-      </section>
-
-      {/* GALLERY */}
-      {gallery.length > 1 && (
-        <section className="border-t border-pearl/10 px-6 py-20">
-          <div className="mx-auto max-w-6xl">
-            <p className="mb-8 text-[10px] uppercase tracking-[0.35em] text-gold">
-              [ Gallery ]
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-              {gallery.map((g, i) => (
-                <div key={i} className="aspect-[4/5] overflow-hidden bg-pearl/5">
-                  <img
-                    src={resolveAsset(g)}
-                    alt={`${artist.name} — ${i + 1}`}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      </div>
 
       {/* PREV / NEXT */}
       {all.length > 1 && prev && next && (
@@ -222,5 +331,14 @@ function ArtistPage() {
         </section>
       )}
     </article>
+  );
+}
+
+function SectionLabel({ n, title }: { n: string; title: string }) {
+  return (
+    <div className="flex items-baseline gap-4">
+      <span className="font-display text-[10px] uppercase tracking-[0.4em] text-gold">[ {n} ]</span>
+      <h2 className="font-display text-2xl uppercase italic text-pearl md:text-3xl">{title}</h2>
+    </div>
   );
 }

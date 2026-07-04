@@ -156,6 +156,7 @@ function ArtistForm({ id, onClose }: { id: string | null; onClose: () => void })
     industry: existing?.industry ?? "Music",
     representation_status: existing?.representation_status ?? "Active",
     live_photo_url: existing?.live_photo_url ?? "",
+    press_kit_url: existing?.press_kit_url ?? "",
     short_bio: existing?.short_bio ?? "",
     bio: existing?.bio ?? "",
     achievements: (existing?.achievements ?? []).join("\n"),

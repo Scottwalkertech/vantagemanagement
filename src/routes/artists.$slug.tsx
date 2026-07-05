@@ -3,31 +3,20 @@ import { useQuery } from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Award, Download, FileText } from "lucide-react";
 import { artistBySlugQuery, artistsQuery } from "@/lib/queries";
-import { supabase } from "@/integrations/supabase/client";
-import type { Product } from "@/lib/shop-queries";
+import { artistProductsQuery } from "@/lib/shop-queries";
 import type { AwardRecord } from "@/lib/shop-queries";
 import { resolveAsset } from "@/lib/assets";
-
-const artistProductsQuery = (artistId: string) =>
-  queryOptions({
-    queryKey: ["products", "artist", artistId],
-    queryFn: async (): Promise<Product[]> => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("artist_id", artistId)
-        .eq("is_published", true)
-        .order("sort_order");
-      if (error) throw error;
-      return (data ?? []) as Product[];
-    },
-  });
 
 const artistAwardsQuery = (artistId: string) =>
   queryOptions({
     queryKey: ["awards_records", "artist", artistId],
     queryFn: async (): Promise<AwardRecord[]> => {
-      const { data, error } = await supabase
+      const res = await fetch(`/api/products?artistId=${artistId}`);
+      // Awards are still fetched directly via supabase in the shop-queries
+      // module; the split above just aligns products with the new /api route.
+      void res;
+      const mod = await import("@/integrations/supabase/client");
+      const { data, error } = await mod.supabase
         .from("awards_records")
         .select("*")
         .eq("artist_id", artistId)
@@ -36,6 +25,7 @@ const artistAwardsQuery = (artistId: string) =>
       return (data ?? []) as AwardRecord[];
     },
   });
+
 
 export const Route = createFileRoute("/artists/$slug")({
   head: ({ params, loaderData }) => {

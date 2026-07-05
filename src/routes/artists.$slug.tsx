@@ -340,3 +340,16 @@ function SectionLabel({ n, title }: { n: string; title: string }) {
     </div>
   );
 }
+
+function getPressKitLinks(artist: { press_kit_url: string | null; slug: string; name: string }): { href: string; label: string }[] {
+  const raw = (artist.press_kit_url ?? "").trim();
+  if (!raw) {
+    return [{ href: `/press/${artist.slug}.pdf`, label: `${artist.name} — Press Kit (PDF)` }];
+  }
+  const parts = raw.split(/[\n,]/).map((s) => s.trim()).filter(Boolean);
+  return parts.map((href, i) => ({
+    href,
+    label: parts.length > 1 ? `Press Asset ${String(i + 1).padStart(2, "0")}` : `${artist.name} — Press Kit`,
+  }));
+}
+

@@ -34,30 +34,38 @@ export type AwardRecord = {
   sort_order: number;
 };
 
+async function fetchProducts(params: {
+  artistId?: string;
+  all?: boolean;
+}): Promise<Product[]> {
+  const sp = new URLSearchParams();
+  if (params.artistId) sp.set("artistId", params.artistId);
+  if (params.all) sp.set("all", "1");
+  const qs = sp.toString();
+  const res = await fetch(`/api/products${qs ? `?${qs}` : ""}`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `Products request failed: ${res.status}`);
+  }
+  const body = (await res.json()) as { products: Product[] };
+  return body.products ?? [];
+}
+
 export const productsQuery = queryOptions({
   queryKey: ["products"],
-  queryFn: async (): Promise<Product[]> => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .eq("is_published", true)
-      .order("sort_order");
-    if (error) throw error;
-    return (data ?? []) as Product[];
-  },
+  queryFn: () => fetchProducts({}),
 });
 
 export const allProductsQuery = queryOptions({
   queryKey: ["products", "all"],
-  queryFn: async (): Promise<Product[]> => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("sort_order");
-    if (error) throw error;
-    return (data ?? []) as Product[];
-  },
+  queryFn: () => fetchProducts({ all: true }),
 });
+
+export const artistProductsQuery = (artistId: string) =>
+  queryOptions({
+    queryKey: ["products", "artist", artistId],
+    queryFn: () => fetchProducts({ artistId }),
+  });
 
 export const charityWorksQuery = queryOptions({
   queryKey: ["charity_works"],

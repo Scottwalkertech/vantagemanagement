@@ -3,30 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Award, Download, FileText } from "lucide-react";
 import { artistBySlugQuery, artistsQuery } from "@/lib/queries";
-import { supabase } from "@/integrations/supabase/client";
-import type { Product } from "@/lib/shop-queries";
+import { artistProductsQuery } from "@/lib/shop-queries";
 import type { AwardRecord } from "@/lib/shop-queries";
 import { resolveAsset } from "@/lib/assets";
-
-const artistProductsQuery = (artistId: string) =>
-  queryOptions({
-    queryKey: ["products", "artist", artistId],
-    queryFn: async (): Promise<Product[]> => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("artist_id", artistId)
-        .eq("is_published", true)
-        .order("sort_order");
-      if (error) throw error;
-      return (data ?? []) as Product[];
-    },
-  });
 
 const artistAwardsQuery = (artistId: string) =>
   queryOptions({
     queryKey: ["awards_records", "artist", artistId],
     queryFn: async (): Promise<AwardRecord[]> => {
+      const { supabase } = await import("@/integrations/supabase/client");
       const { data, error } = await supabase
         .from("awards_records")
         .select("*")
@@ -36,6 +21,8 @@ const artistAwardsQuery = (artistId: string) =>
       return (data ?? []) as AwardRecord[];
     },
   });
+
+
 
 export const Route = createFileRoute("/artists/$slug")({
   head: ({ params, loaderData }) => {
@@ -255,32 +242,41 @@ function ArtistDossier() {
               )}
             </section>
 
-            {/* 4. Media Relations */}
+            {/* 4. Press Kit Links */}
             <section className="mt-20 border-t border-pearl/10 pt-12">
-              <SectionLabel n="04" title="Media Relations" />
+              <SectionLabel n="04" title="Press Kit Links" />
               <p className="mt-6 text-sm leading-relaxed text-pearl/70">
-                For press enquiries, interview requests, and editorial features involving{" "}
-                {artist.name}, download the official press kit or contact the Vantage press office
-                directly.
+                Editorial assets, biographies, and approved imagery for press
+                and partnership use.
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a
-                  href={artist.press_kit_url || `/press/${artist.slug}.pdf`}
-                  download={!artist.press_kit_url}
-                  target={artist.press_kit_url ? "_blank" : undefined}
-                  rel={artist.press_kit_url ? "noopener noreferrer" : undefined}
-                  className="inline-flex items-center justify-center gap-3 bg-gold px-6 py-4 font-display text-[10px] font-bold uppercase tracking-[0.35em] text-obsidian transition-colors hover:bg-gold/90"
-                >
-                  <Download size={14} /> Download Press Kit PDF
-                </a>
-                <Link
-                  to="/contact"
-                  className="inline-flex items-center justify-center gap-3 border border-pearl/20 px-6 py-4 font-display text-[10px] font-bold uppercase tracking-[0.35em] text-pearl transition-colors hover:border-gold hover:text-gold"
-                >
-                  <FileText size={14} /> Press Enquiry
-                </Link>
-              </div>
+              <ul className="mt-8 space-y-2">
+                {getPressKitLinks(artist).map((link, i) => (
+                  <li key={i}>
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-center justify-between gap-4 border border-pearl/15 px-5 py-4 transition-colors hover:border-gold"
+                    >
+                      <span className="flex items-center gap-3">
+                        <Download size={14} className="text-gold" />
+                        <span className="font-display text-[11px] uppercase tracking-[0.3em] text-pearl group-hover:text-gold">
+                          {link.label}
+                        </span>
+                      </span>
+                      <ArrowRight size={14} className="text-pearl/40 group-hover:text-gold" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/contact"
+                className="mt-6 inline-flex items-center justify-center gap-3 border border-pearl/20 px-6 py-4 font-display text-[10px] font-bold uppercase tracking-[0.35em] text-pearl transition-colors hover:border-gold hover:text-gold"
+              >
+                <FileText size={14} /> Press Enquiry
+              </Link>
             </section>
+
 
             {/* Booking CTA */}
             <section className="mt-20 border-t border-pearl/10 pt-12">
@@ -344,3 +340,16 @@ function SectionLabel({ n, title }: { n: string; title: string }) {
     </div>
   );
 }
+
+function getPressKitLinks(artist: { press_kit_url: string | null; slug: string; name: string }): { href: string; label: string }[] {
+  const raw = (artist.press_kit_url ?? "").trim();
+  if (!raw) {
+    return [{ href: `/press/${artist.slug}.pdf`, label: `${artist.name} — Press Kit (PDF)` }];
+  }
+  const parts = raw.split(/[\n,]/).map((s) => s.trim()).filter(Boolean);
+  return parts.map((href, i) => ({
+    href,
+    label: parts.length > 1 ? `Press Asset ${String(i + 1).padStart(2, "0")}` : `${artist.name} — Press Kit`,
+  }));
+}
+

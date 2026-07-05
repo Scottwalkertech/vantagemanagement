@@ -17,7 +17,6 @@ export type Artist = {
   live_photo_url: string | null;
   representation_status: string;
   press_kit_url: string | null;
-
 };
 
 export type Testimonial = {
@@ -44,16 +43,20 @@ export type AgentProfile = {
   focus: string | null;
 };
 
+async function fetchJson<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `Request failed: ${res.status}`);
+  }
+  return (await res.json()) as T;
+}
+
 export const artistsQuery = queryOptions({
   queryKey: ["artists"],
   queryFn: async (): Promise<Artist[]> => {
-    const { data, error } = await supabase
-      .from("artists")
-      .select("*")
-      .eq("is_published", true)
-      .order("sort_order");
-    if (error) throw error;
-    return (data ?? []) as Artist[];
+    const { artists } = await fetchJson<{ artists: Artist[] }>("/api/artists");
+    return artists ?? [];
   },
 });
 
@@ -61,13 +64,10 @@ export const artistBySlugQuery = (slug: string) =>
   queryOptions({
     queryKey: ["artist", slug],
     queryFn: async (): Promise<Artist | null> => {
-      const { data, error } = await supabase
-        .from("artists")
-        .select("*")
-        .eq("slug", slug)
-        .maybeSingle();
-      if (error) throw error;
-      return (data as Artist) ?? null;
+      const { artist } = await fetchJson<{ artist: Artist | null }>(
+        `/api/artists?slug=${encodeURIComponent(slug)}`,
+      );
+      return artist ?? null;
     },
   });
 

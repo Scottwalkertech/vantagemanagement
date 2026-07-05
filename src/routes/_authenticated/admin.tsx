@@ -461,7 +461,7 @@ function ASelect({
 }
 
 
-type StoreSubTab = "inventory" | "linker";
+type StoreSubTab = "inventory" | "assignments";
 
 function StoreAdmin() {
   const [sub, setSub] = useState<StoreSubTab>("inventory");
@@ -470,7 +470,7 @@ function StoreAdmin() {
       <div className="mb-6 flex gap-2 border-b border-pearl/10 pb-3">
         {([
           { v: "inventory", l: "Inventory" },
-          { v: "linker", l: "Bulk Product Linker" },
+          { v: "assignments", l: "Artist Assignments" },
         ] as { v: StoreSubTab; l: string }[]).map((t) => (
           <button
             key={t.v}
@@ -483,116 +483,220 @@ function StoreAdmin() {
           </button>
         ))}
       </div>
-      {sub === "inventory" ? <StoreInventory /> : <BulkProductLinker />}
+      {sub === "inventory" ? <StoreInventory /> : <ArtistAssignments />}
     </Section>
   );
 }
 
-function BulkProductLinker() {
+function ArtistAssignments() {
   const qc = useQueryClient();
   const { data: artists = [] } = useQuery(artistsQuery);
   const { data: products = [] } = useQuery(allProductsQuery);
   const [artistId, setArtistId] = useState<string>("");
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const [assigned, setAssigned] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
 
   const selectedArtist = artists.find((a) => a.id === artistId);
-  const linkedCount = products.filter((p) => p.artist_id === artistId).length;
+  const originalAssigned = new Set(
+    products.filter((p) => p.artist_id === artistId).map((p) => p.id),
+  );
 
-  const toggle = async (productId: string, currentArtistId: string | null) => {
+  // Reset selection when artist changes.
+  useEffect(() => {
     if (!artistId) {
-      toast.error("Select an artist first");
+      setAssigned(new Set());
       return;
     }
-    const isLinkedHere = currentArtistId === artistId;
-    const nextValue = isLinkedHere ? null : artistId;
-    setBusyId(productId);
-    const { error } = await supabase
-      .from("products")
-      .update({ artist_id: nextValue })
-      .eq("id", productId);
-    setBusyId(null);
-    if (error) {
-      toast.error(error.message);
-    } else {
+    setAssigned(
+      new Set(products.filter((p) => p.artist_id === artistId).map((p) => p.id)),
+    );
+  }, [artistId, products]);
+
+  const assignedList = products.filter((p) => assigned.has(p.id));
+  const unassignedList = products.filter((p) => !assigned.has(p.id));
+
+  const move = (id: string, direction: "assign" | "unassign") => {
+    setAssigned((prev) => {
+      const next = new Set(prev);
+      if (direction === "assign") next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const dirty =
+    assigned.size !== originalAssigned.size ||
+    [...assigned].some((id) => !originalAssigned.has(id));
+
+  const save = async () => {
+    if (!artistId) return;
+    setSaving(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error("Session expired — sign in again.");
+      const res = await fetch("/api/admin/bulk-link", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          artist_id: artistId,
+          product_ids: [...assigned],
+        }),
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || `Save failed (${res.status})`);
+      }
+      toast.success("Assignments saved");
       qc.invalidateQueries({ queryKey: ["products"] });
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <div>
-      <div className="mb-6 border border-pearl/10 p-6">
-        <label className="mb-2 block text-[10px] uppercase tracking-[0.3em] text-pearl/50">
-          Select Artist
-        </label>
-        <select
-          value={artistId}
-          onChange={(e) => setArtistId(e.target.value)}
-          className="w-full border-b border-pearl/20 bg-obsidian py-2 focus:border-gold focus:outline-none"
+      <div className="mb-6 flex flex-wrap items-end gap-4 border border-pearl/10 p-6">
+        <div className="min-w-[240px] flex-1">
+          <label className="mb-2 block text-[10px] uppercase tracking-[0.3em] text-pearl/50">
+            Select Public Figure
+          </label>
+          <select
+            value={artistId}
+            onChange={(e) => setArtistId(e.target.value)}
+            className="w-full border-b border-pearl/20 bg-obsidian py-2 focus:border-gold focus:outline-none"
+          >
+            <option value="">— Choose an artist —</option>
+            {artists.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name} · {a.industry}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          onClick={save}
+          disabled={!artistId || !dirty || saving}
+          className="bg-gold px-6 py-3 text-[10px] font-bold uppercase tracking-[0.3em] text-obsidian disabled:cursor-not-allowed disabled:bg-pearl/20 disabled:text-pearl/40"
         >
-          <option value="">— Choose an artist —</option>
-          {artists.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name} · {a.industry}
-            </option>
-          ))}
-        </select>
-        {selectedArtist && (
-          <p className="mt-3 text-[10px] uppercase tracking-[0.3em] text-pearl/40">
-            [ {String(linkedCount).padStart(2, "0")} products currently linked to {selectedArtist.name} ]
-          </p>
-        )}
+          {saving ? "Saving…" : "Save Assignments"}
+        </button>
       </div>
 
       {!artistId ? (
         <p className="py-16 text-center text-[10px] uppercase tracking-[0.3em] text-pearl/40">
-          Select an artist above to attach or detach products.
+          Select an artist above to manage their assigned products.
         </p>
-      ) : products.length === 0 ? (
-        <p className="text-pearl/40">No products in the store yet.</p>
       ) : (
-        <div className="space-y-2">
-          {products.map((p) => {
-            const linkedHere = p.artist_id === artistId;
-            const linkedElsewhere = !!p.artist_id && !linkedHere;
-            const otherName = linkedElsewhere
-              ? artists.find((a) => a.id === p.artist_id)?.name
-              : null;
-            const isBusy = busyId === p.id;
-            return (
-              <label
-                key={p.id}
-                className={`flex cursor-pointer items-center justify-between gap-4 border p-4 transition-colors ${
-                  linkedHere ? "border-gold bg-gold/5" : "border-pearl/10 hover:border-pearl/30"
-                } ${isBusy ? "opacity-50" : ""}`}
-              >
-                <div className="flex items-center gap-4">
-                  <input
-                    type="checkbox"
-                    checked={linkedHere}
-                    disabled={isBusy}
-                    onChange={() => toggle(p.id, p.artist_id)}
-                    className="size-4 accent-[color:hsl(var(--gold))]"
-                  />
-                  <div>
-                    <p className="font-display text-sm uppercase tracking-wide">{p.title}</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <AssignmentColumn
+            title="Assigned"
+            count={assignedList.length}
+            sub={selectedArtist ? `Linked to ${selectedArtist.name}` : ""}
+            tone="gold"
+            products={assignedList}
+            actionLabel="Remove →"
+            emptyLabel="No products assigned yet."
+            onAction={(id) => move(id, "unassign")}
+            artists={artists}
+          />
+          <AssignmentColumn
+            title="Unassigned"
+            count={unassignedList.length}
+            sub="Available inventory"
+            tone="pearl"
+            products={unassignedList}
+            actionLabel="← Assign"
+            emptyLabel="Everything is currently assigned."
+            onAction={(id) => move(id, "assign")}
+            artists={artists}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AssignmentColumn({
+  title,
+  count,
+  sub,
+  tone,
+  products,
+  actionLabel,
+  emptyLabel,
+  onAction,
+  artists,
+}: {
+  title: string;
+  count: number;
+  sub: string;
+  tone: "gold" | "pearl";
+  products: { id: string; title: string; price: number; currency: string; category: string; artist_id: string | null }[];
+  actionLabel: string;
+  emptyLabel: string;
+  onAction: (id: string) => void;
+  artists: { id: string; name: string }[];
+}) {
+  const border = tone === "gold" ? "border-gold/40" : "border-pearl/10";
+  const accent = tone === "gold" ? "text-gold" : "text-pearl/60";
+  return (
+    <div className={`flex flex-col border ${border}`}>
+      <div className="flex items-baseline justify-between border-b border-pearl/10 px-4 py-3">
+        <div>
+          <p className={`text-[10px] uppercase tracking-[0.3em] ${accent}`}>
+            {title} [ {String(count).padStart(2, "0")} ]
+          </p>
+          {sub && (
+            <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-pearl/40">{sub}</p>
+          )}
+        </div>
+      </div>
+      <div className="max-h-[520px] overflow-y-auto">
+        {products.length === 0 ? (
+          <p className="px-4 py-8 text-center text-[10px] uppercase tracking-[0.3em] text-pearl/30">
+            {emptyLabel}
+          </p>
+        ) : (
+          <ul className="divide-y divide-pearl/5">
+            {products.map((p) => {
+              const other =
+                p.artist_id && tone === "pearl"
+                  ? artists.find((a) => a.id === p.artist_id)?.name
+                  : null;
+              return (
+                <li
+                  key={p.id}
+                  className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-pearl/5"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-display text-sm uppercase tracking-wide">
+                      {p.title}
+                    </p>
                     <p className="text-[10px] uppercase tracking-widest text-pearl/40">
                       {p.category} · {Number(p.price).toFixed(2)} {p.currency}
-                      {linkedElsewhere && (
-                        <span className="ml-2 text-destructive">
-                          · linked to {otherName} (checking will reassign)
-                        </span>
+                      {other && (
+                        <span className="ml-2 text-destructive">· held by {other}</span>
                       )}
                     </p>
                   </div>
-                </div>
-                <span className="text-[10px] uppercase tracking-[0.3em] text-pearl/40">
-                  {linkedHere ? "Attached" : linkedElsewhere ? "Elsewhere" : "Unlinked"}
-                </span>
-              </label>
-            );
-          })}
-        </div>
-      )}
+                  <button
+                    onClick={() => onAction(p.id)}
+                    className="shrink-0 border border-pearl/20 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-pearl/70 hover:border-gold hover:text-gold"
+                  >
+                    {actionLabel}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

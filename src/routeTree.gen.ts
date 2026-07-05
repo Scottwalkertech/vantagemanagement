@@ -22,7 +22,10 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArtistsIndexRouteImport } from './routes/artists.index'
 import { Route as ArtistsSlugRouteImport } from './routes/artists.$slug'
+import { Route as ApiProductsRouteImport } from './routes/api/products'
+import { Route as ApiArtistsRouteImport } from './routes/api/artists'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as ApiAdminBulkLinkRouteImport } from './routes/api/admin/bulk-link'
 
 const TrackRecordRoute = TrackRecordRouteImport.update({
   id: '/track-record',
@@ -88,10 +91,25 @@ const ArtistsSlugRoute = ArtistsSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ArtistsRoute,
 } as any)
+const ApiProductsRoute = ApiProductsRouteImport.update({
+  id: '/api/products',
+  path: '/api/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiArtistsRoute = ApiArtistsRouteImport.update({
+  id: '/api/artists',
+  path: '/api/artists',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiAdminBulkLinkRoute = ApiAdminBulkLinkRouteImport.update({
+  id: '/api/admin/bulk-link',
+  path: '/api/admin/bulk-link',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -106,8 +124,11 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/track-record': typeof TrackRecordRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/api/artists': typeof ApiArtistsRoute
+  '/api/products': typeof ApiProductsRoute
   '/artists/$slug': typeof ArtistsSlugRoute
   '/artists/': typeof ArtistsIndexRoute
+  '/api/admin/bulk-link': typeof ApiAdminBulkLinkRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -120,8 +141,11 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/track-record': typeof TrackRecordRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/api/artists': typeof ApiArtistsRoute
+  '/api/products': typeof ApiProductsRoute
   '/artists/$slug': typeof ArtistsSlugRoute
   '/artists': typeof ArtistsIndexRoute
+  '/api/admin/bulk-link': typeof ApiAdminBulkLinkRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -137,8 +161,11 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/track-record': typeof TrackRecordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/api/artists': typeof ApiArtistsRoute
+  '/api/products': typeof ApiProductsRoute
   '/artists/$slug': typeof ArtistsSlugRoute
   '/artists/': typeof ArtistsIndexRoute
+  '/api/admin/bulk-link': typeof ApiAdminBulkLinkRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -154,8 +181,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/track-record'
     | '/admin'
+    | '/api/artists'
+    | '/api/products'
     | '/artists/$slug'
     | '/artists/'
+    | '/api/admin/bulk-link'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -168,8 +198,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/track-record'
     | '/admin'
+    | '/api/artists'
+    | '/api/products'
     | '/artists/$slug'
     | '/artists'
+    | '/api/admin/bulk-link'
   id:
     | '__root__'
     | '/'
@@ -184,8 +217,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/track-record'
     | '/_authenticated/admin'
+    | '/api/artists'
+    | '/api/products'
     | '/artists/$slug'
     | '/artists/'
+    | '/api/admin/bulk-link'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -200,6 +236,9 @@ export interface RootRouteChildren {
   ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TrackRecordRoute: typeof TrackRecordRoute
+  ApiArtistsRoute: typeof ApiArtistsRoute
+  ApiProductsRoute: typeof ApiProductsRoute
+  ApiAdminBulkLinkRoute: typeof ApiAdminBulkLinkRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -295,12 +334,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArtistsSlugRouteImport
       parentRoute: typeof ArtistsRoute
     }
+    '/api/products': {
+      id: '/api/products'
+      path: '/api/products'
+      fullPath: '/api/products'
+      preLoaderRoute: typeof ApiProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/artists': {
+      id: '/api/artists'
+      path: '/api/artists'
+      fullPath: '/api/artists'
+      preLoaderRoute: typeof ApiArtistsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/admin/bulk-link': {
+      id: '/api/admin/bulk-link'
+      path: '/api/admin/bulk-link'
+      fullPath: '/api/admin/bulk-link'
+      preLoaderRoute: typeof ApiAdminBulkLinkRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -341,6 +401,9 @@ const rootRouteChildren: RootRouteChildren = {
   ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TrackRecordRoute: TrackRecordRoute,
+  ApiArtistsRoute: ApiArtistsRoute,
+  ApiProductsRoute: ApiProductsRoute,
+  ApiAdminBulkLinkRoute: ApiAdminBulkLinkRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -11,12 +11,8 @@ const artistAwardsQuery = (artistId: string) =>
   queryOptions({
     queryKey: ["awards_records", "artist", artistId],
     queryFn: async (): Promise<AwardRecord[]> => {
-      const res = await fetch(`/api/products?artistId=${artistId}`);
-      // Awards are still fetched directly via supabase in the shop-queries
-      // module; the split above just aligns products with the new /api route.
-      void res;
-      const mod = await import("@/integrations/supabase/client");
-      const { data, error } = await mod.supabase
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data, error } = await supabase
         .from("awards_records")
         .select("*")
         .eq("artist_id", artistId)
@@ -25,6 +21,7 @@ const artistAwardsQuery = (artistId: string) =>
       return (data ?? []) as AwardRecord[];
     },
   });
+
 
 
 export const Route = createFileRoute("/artists/$slug")({

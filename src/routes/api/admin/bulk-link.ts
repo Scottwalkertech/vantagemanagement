@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
+import { getDbUrl, getDbAnonKey } from "@/lib/db-env.server";
 
 const payloadSchema = z.object({
   artist_id: z.string().uuid(),
@@ -19,18 +20,14 @@ export const Route = createFileRoute("/api/admin/bulk-link")({
         const token = auth.slice(7);
 
         // Client scoped to the caller's JWT — RLS + has_role apply as the user.
-        const sb = createClient<Database>(
-          process.env.SUPABASE_URL!,
-          process.env.SUPABASE_PUBLISHABLE_KEY!,
-          {
-            auth: {
-              storage: undefined,
-              persistSession: false,
-              autoRefreshToken: false,
-            },
-            global: { headers: { Authorization: `Bearer ${token}` } },
+        const sb = createClient<Database>(getDbUrl(), getDbAnonKey(), {
+          auth: {
+            storage: undefined,
+            persistSession: false,
+            autoRefreshToken: false,
           },
-        );
+          global: { headers: { Authorization: `Bearer ${token}` } },
+        });
 
         const { data: userData, error: userErr } = await sb.auth.getUser();
         if (userErr || !userData.user) {

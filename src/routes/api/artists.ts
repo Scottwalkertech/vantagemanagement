@@ -1,22 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { getDbUrl, getDbAnonKey } from "@/lib/db-env.server";
 
 export const Route = createFileRoute("/api/artists")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const sb = createClient<Database>(
-          process.env.SUPABASE_URL!,
-          process.env.SUPABASE_PUBLISHABLE_KEY!,
-          {
-            auth: {
-              storage: undefined,
-              persistSession: false,
-              autoRefreshToken: false,
-            },
+        const sb = createClient<Database>(getDbUrl(), getDbAnonKey(), {
+          auth: {
+            storage: undefined,
+            persistSession: false,
+            autoRefreshToken: false,
           },
-        );
+        });
         const url = new URL(request.url);
         const slug = url.searchParams.get("slug");
         if (slug) {

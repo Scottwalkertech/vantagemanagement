@@ -1007,22 +1007,27 @@ function AwardsAdmin() {
       artist_id: draft.artist_id || null,
       sort_order: Number(draft.sort_order),
     };
-    const q = editingId
-      ? supabase.from("awards_records").update(payload).eq("id", editingId)
-      : supabase.from("awards_records").insert(payload);
-    const { error } = await q;
-    if (error) return toast.error(error.message);
-    toast.success("Saved");
-    setDraft(empty);
-    setEditingId(null);
-    qc.invalidateQueries({ queryKey: ["awards_records"] });
+    try {
+      if (editingId)
+        await adminMutate({ table: "awards_records", op: "update", id: editingId, values: payload });
+      else await adminMutate({ table: "awards_records", op: "insert", values: payload });
+      toast.success("Saved");
+      setDraft(empty);
+      setEditingId(null);
+      qc.invalidateQueries({ queryKey: ["awards_records"] });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
+    }
   };
 
   const remove = async (id: string) => {
     if (!confirm("Delete this record?")) return;
-    const { error } = await supabase.from("awards_records").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else qc.invalidateQueries({ queryKey: ["awards_records"] });
+    try {
+      await adminMutate({ table: "awards_records", op: "delete", id });
+      qc.invalidateQueries({ queryKey: ["awards_records"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   return (

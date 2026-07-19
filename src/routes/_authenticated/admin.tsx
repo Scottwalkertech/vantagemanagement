@@ -396,8 +396,12 @@ function InquiriesAdmin() {
   });
 
   const mark = async (id: string, status: string) => {
-    await supabase.from("inquiries").update({ status }).eq("id", id);
-    qc.invalidateQueries({ queryKey: ["inquiries"] });
+    try {
+      await adminMutate({ table: "inquiries", op: "update", id, values: { status } });
+      qc.invalidateQueries({ queryKey: ["inquiries"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   if (isLoading) return <p className="text-pearl/60">Loading…</p>;

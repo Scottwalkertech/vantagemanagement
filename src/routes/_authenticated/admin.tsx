@@ -765,29 +765,37 @@ function StoreInventory() {
       is_published: draft.is_published,
       sort_order: Number(draft.sort_order),
     };
-    const q = editingId
-      ? supabase.from("products").update(payload).eq("id", editingId)
-      : supabase.from("products").insert(payload);
-    const { error } = await q;
-    if (error) return toast.error(error.message);
-    toast.success("Saved");
-    setDraft(empty);
-    setEditingId(null);
-    qc.invalidateQueries({ queryKey: ["products"] });
+    try {
+      if (editingId)
+        await adminMutate({ table: "products", op: "update", id: editingId, values: payload });
+      else await adminMutate({ table: "products", op: "insert", values: payload });
+      toast.success("Saved");
+      setDraft(empty);
+      setEditingId(null);
+      qc.invalidateQueries({ queryKey: ["products"] });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
+    }
   };
 
   const adjustStock = async (id: string, delta: number, current: number) => {
     const next = Math.max(0, current + delta);
-    const { error } = await supabase.from("products").update({ stock: next }).eq("id", id);
-    if (error) toast.error(error.message);
-    else qc.invalidateQueries({ queryKey: ["products"] });
+    try {
+      await adminMutate({ table: "products", op: "update", id, values: { stock: next } });
+      qc.invalidateQueries({ queryKey: ["products"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   const remove = async (id: string) => {
     if (!confirm("Delete this product?")) return;
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else qc.invalidateQueries({ queryKey: ["products"] });
+    try {
+      await adminMutate({ table: "products", op: "delete", id });
+      qc.invalidateQueries({ queryKey: ["products"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   return (

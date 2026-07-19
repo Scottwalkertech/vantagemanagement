@@ -176,15 +176,14 @@ function ArtistForm({ id, onClose }: { id: string | null; onClose: () => void })
       gallery: form.gallery.split("\n").filter(Boolean),
       sort_order: Number(form.sort_order),
     };
-    const q = id
-      ? supabase.from("artists").update(payload).eq("id", id)
-      : supabase.from("artists").insert(payload);
-    const { error } = await q;
-    if (error) toast.error(error.message);
-    else {
+    try {
+      if (id) await adminMutate({ table: "artists", op: "update", id, values: payload });
+      else await adminMutate({ table: "artists", op: "insert", values: payload });
       toast.success("Saved");
       qc.invalidateQueries({ queryKey: ["artists"] });
       onClose();
+    } catch (e2) {
+      toast.error((e2 as Error).message);
     }
   };
 

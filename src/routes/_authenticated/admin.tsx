@@ -230,19 +230,27 @@ function TestimonialsAdmin() {
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from("testimonials").insert({ ...draft, sort_order: data.length + 1 });
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await adminMutate({
+        table: "testimonials",
+        op: "insert",
+        values: { ...draft, sort_order: data.length + 1 },
+      });
       toast.success("Added");
       setDraft({ quote: "", author: "", author_role: "" });
       qc.invalidateQueries({ queryKey: ["testimonials"] });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
     }
   };
 
   const remove = async (id: string) => {
-    const { error } = await supabase.from("testimonials").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else qc.invalidateQueries({ queryKey: ["testimonials"] });
+    try {
+      await adminMutate({ table: "testimonials", op: "delete", id });
+      qc.invalidateQueries({ queryKey: ["testimonials"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   return (

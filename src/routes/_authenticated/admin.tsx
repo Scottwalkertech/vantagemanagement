@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { adminMutate } from "@/lib/admin-api";
 import {
   agentProfileQuery,
   artistsQuery,
@@ -100,11 +101,12 @@ function ArtistsAdmin() {
 
   const remove = async (id: string) => {
     if (!confirm("Delete this artist?")) return;
-    const { error } = await supabase.from("artists").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await adminMutate({ table: "artists", op: "delete", id });
       toast.success("Deleted");
       qc.invalidateQueries({ queryKey: ["artists"] });
+    } catch (e) {
+      toast.error((e as Error).message);
     }
   };
 
@@ -174,15 +176,14 @@ function ArtistForm({ id, onClose }: { id: string | null; onClose: () => void })
       gallery: form.gallery.split("\n").filter(Boolean),
       sort_order: Number(form.sort_order),
     };
-    const q = id
-      ? supabase.from("artists").update(payload).eq("id", id)
-      : supabase.from("artists").insert(payload);
-    const { error } = await q;
-    if (error) toast.error(error.message);
-    else {
+    try {
+      if (id) await adminMutate({ table: "artists", op: "update", id, values: payload });
+      else await adminMutate({ table: "artists", op: "insert", values: payload });
       toast.success("Saved");
       qc.invalidateQueries({ queryKey: ["artists"] });
       onClose();
+    } catch (e2) {
+      toast.error((e2 as Error).message);
     }
   };
 
@@ -229,19 +230,27 @@ function TestimonialsAdmin() {
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from("testimonials").insert({ ...draft, sort_order: data.length + 1 });
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await adminMutate({
+        table: "testimonials",
+        op: "insert",
+        values: { ...draft, sort_order: data.length + 1 },
+      });
       toast.success("Added");
       setDraft({ quote: "", author: "", author_role: "" });
       qc.invalidateQueries({ queryKey: ["testimonials"] });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
     }
   };
 
   const remove = async (id: string) => {
-    const { error } = await supabase.from("testimonials").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else qc.invalidateQueries({ queryKey: ["testimonials"] });
+    try {
+      await adminMutate({ table: "testimonials", op: "delete", id });
+      qc.invalidateQueries({ queryKey: ["testimonials"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   return (
@@ -277,16 +286,25 @@ function ClientsAdmin() {
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) return;
-    const { error } = await supabase.from("clients").insert({ name, sort_order: data.length + 1 });
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await adminMutate({
+        table: "clients",
+        op: "insert",
+        values: { name, sort_order: data.length + 1 },
+      });
       setName("");
       qc.invalidateQueries({ queryKey: ["clients"] });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
     }
   };
   const remove = async (id: string) => {
-    await supabase.from("clients").delete().eq("id", id);
-    qc.invalidateQueries({ queryKey: ["clients"] });
+    try {
+      await adminMutate({ table: "clients", op: "delete", id });
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   return (
@@ -329,11 +347,17 @@ function AgentAdmin() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!data) return;
-    const { error } = await supabase.from("agent_profile").update(form).eq("id", data.id);
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await adminMutate({
+        table: "agent_profile",
+        op: "update",
+        id: data.id,
+        values: form,
+      });
       toast.success("Saved");
       qc.invalidateQueries({ queryKey: ["agent-profile"] });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
     }
   };
 
@@ -372,8 +396,12 @@ function InquiriesAdmin() {
   });
 
   const mark = async (id: string, status: string) => {
-    await supabase.from("inquiries").update({ status }).eq("id", id);
-    qc.invalidateQueries({ queryKey: ["inquiries"] });
+    try {
+      await adminMutate({ table: "inquiries", op: "update", id, values: { status } });
+      qc.invalidateQueries({ queryKey: ["inquiries"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   if (isLoading) return <p className="text-pearl/60">Loading…</p>;
@@ -737,29 +765,37 @@ function StoreInventory() {
       is_published: draft.is_published,
       sort_order: Number(draft.sort_order),
     };
-    const q = editingId
-      ? supabase.from("products").update(payload).eq("id", editingId)
-      : supabase.from("products").insert(payload);
-    const { error } = await q;
-    if (error) return toast.error(error.message);
-    toast.success("Saved");
-    setDraft(empty);
-    setEditingId(null);
-    qc.invalidateQueries({ queryKey: ["products"] });
+    try {
+      if (editingId)
+        await adminMutate({ table: "products", op: "update", id: editingId, values: payload });
+      else await adminMutate({ table: "products", op: "insert", values: payload });
+      toast.success("Saved");
+      setDraft(empty);
+      setEditingId(null);
+      qc.invalidateQueries({ queryKey: ["products"] });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
+    }
   };
 
   const adjustStock = async (id: string, delta: number, current: number) => {
     const next = Math.max(0, current + delta);
-    const { error } = await supabase.from("products").update({ stock: next }).eq("id", id);
-    if (error) toast.error(error.message);
-    else qc.invalidateQueries({ queryKey: ["products"] });
+    try {
+      await adminMutate({ table: "products", op: "update", id, values: { stock: next } });
+      qc.invalidateQueries({ queryKey: ["products"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   const remove = async (id: string) => {
     if (!confirm("Delete this product?")) return;
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else qc.invalidateQueries({ queryKey: ["products"] });
+    try {
+      await adminMutate({ table: "products", op: "delete", id });
+      qc.invalidateQueries({ queryKey: ["products"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   return (
@@ -877,22 +913,27 @@ function CharityAdmin() {
       evidence_images: draft.evidence_images.split("\n").map((s) => s.trim()).filter(Boolean),
       sort_order: Number(draft.sort_order),
     };
-    const q = editingId
-      ? supabase.from("charity_works").update(payload).eq("id", editingId)
-      : supabase.from("charity_works").insert(payload);
-    const { error } = await q;
-    if (error) return toast.error(error.message);
-    toast.success("Saved");
-    setDraft(empty);
-    setEditingId(null);
-    qc.invalidateQueries({ queryKey: ["charity_works"] });
+    try {
+      if (editingId)
+        await adminMutate({ table: "charity_works", op: "update", id: editingId, values: payload });
+      else await adminMutate({ table: "charity_works", op: "insert", values: payload });
+      toast.success("Saved");
+      setDraft(empty);
+      setEditingId(null);
+      qc.invalidateQueries({ queryKey: ["charity_works"] });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
+    }
   };
 
   const remove = async (id: string) => {
     if (!confirm("Delete this initiative?")) return;
-    const { error } = await supabase.from("charity_works").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else qc.invalidateQueries({ queryKey: ["charity_works"] });
+    try {
+      await adminMutate({ table: "charity_works", op: "delete", id });
+      qc.invalidateQueries({ queryKey: ["charity_works"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   return (
@@ -966,22 +1007,27 @@ function AwardsAdmin() {
       artist_id: draft.artist_id || null,
       sort_order: Number(draft.sort_order),
     };
-    const q = editingId
-      ? supabase.from("awards_records").update(payload).eq("id", editingId)
-      : supabase.from("awards_records").insert(payload);
-    const { error } = await q;
-    if (error) return toast.error(error.message);
-    toast.success("Saved");
-    setDraft(empty);
-    setEditingId(null);
-    qc.invalidateQueries({ queryKey: ["awards_records"] });
+    try {
+      if (editingId)
+        await adminMutate({ table: "awards_records", op: "update", id: editingId, values: payload });
+      else await adminMutate({ table: "awards_records", op: "insert", values: payload });
+      toast.success("Saved");
+      setDraft(empty);
+      setEditingId(null);
+      qc.invalidateQueries({ queryKey: ["awards_records"] });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
+    }
   };
 
   const remove = async (id: string) => {
     if (!confirm("Delete this record?")) return;
-    const { error } = await supabase.from("awards_records").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else qc.invalidateQueries({ queryKey: ["awards_records"] });
+    try {
+      await adminMutate({ table: "awards_records", op: "delete", id });
+      qc.invalidateQueries({ queryKey: ["awards_records"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   return (

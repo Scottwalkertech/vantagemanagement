@@ -25,6 +25,7 @@ import { Route as ArtistsSlugRouteImport } from './routes/artists.$slug'
 import { Route as ApiProductsRouteImport } from './routes/api/products'
 import { Route as ApiArtistsRouteImport } from './routes/api/artists'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as ApiAdminMutateRouteImport } from './routes/api/admin/mutate'
 import { Route as ApiAdminBulkLinkRouteImport } from './routes/api/admin/bulk-link'
 
 const TrackRecordRoute = TrackRecordRouteImport.update({
@@ -106,6 +107,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiAdminMutateRoute = ApiAdminMutateRouteImport.update({
+  id: '/api/admin/mutate',
+  path: '/api/admin/mutate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminBulkLinkRoute = ApiAdminBulkLinkRouteImport.update({
   id: '/api/admin/bulk-link',
   path: '/api/admin/bulk-link',
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/artists/$slug': typeof ArtistsSlugRoute
   '/artists/': typeof ArtistsIndexRoute
   '/api/admin/bulk-link': typeof ApiAdminBulkLinkRoute
+  '/api/admin/mutate': typeof ApiAdminMutateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/artists/$slug': typeof ArtistsSlugRoute
   '/artists': typeof ArtistsIndexRoute
   '/api/admin/bulk-link': typeof ApiAdminBulkLinkRoute
+  '/api/admin/mutate': typeof ApiAdminMutateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/artists/$slug': typeof ArtistsSlugRoute
   '/artists/': typeof ArtistsIndexRoute
   '/api/admin/bulk-link': typeof ApiAdminBulkLinkRoute
+  '/api/admin/mutate': typeof ApiAdminMutateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/artists/$slug'
     | '/artists/'
     | '/api/admin/bulk-link'
+    | '/api/admin/mutate'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/artists/$slug'
     | '/artists'
     | '/api/admin/bulk-link'
+    | '/api/admin/mutate'
   id:
     | '__root__'
     | '/'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/artists/$slug'
     | '/artists/'
     | '/api/admin/bulk-link'
+    | '/api/admin/mutate'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -239,6 +251,7 @@ export interface RootRouteChildren {
   ApiArtistsRoute: typeof ApiArtistsRoute
   ApiProductsRoute: typeof ApiProductsRoute
   ApiAdminBulkLinkRoute: typeof ApiAdminBulkLinkRoute
+  ApiAdminMutateRoute: typeof ApiAdminMutateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -355,6 +368,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/admin/mutate': {
+      id: '/api/admin/mutate'
+      path: '/api/admin/mutate'
+      fullPath: '/api/admin/mutate'
+      preLoaderRoute: typeof ApiAdminMutateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/bulk-link': {
       id: '/api/admin/bulk-link'
       path: '/api/admin/bulk-link'
@@ -404,17 +424,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiArtistsRoute: ApiArtistsRoute,
   ApiProductsRoute: ApiProductsRoute,
   ApiAdminBulkLinkRoute: ApiAdminBulkLinkRoute,
+  ApiAdminMutateRoute: ApiAdminMutateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

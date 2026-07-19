@@ -913,22 +913,27 @@ function CharityAdmin() {
       evidence_images: draft.evidence_images.split("\n").map((s) => s.trim()).filter(Boolean),
       sort_order: Number(draft.sort_order),
     };
-    const q = editingId
-      ? supabase.from("charity_works").update(payload).eq("id", editingId)
-      : supabase.from("charity_works").insert(payload);
-    const { error } = await q;
-    if (error) return toast.error(error.message);
-    toast.success("Saved");
-    setDraft(empty);
-    setEditingId(null);
-    qc.invalidateQueries({ queryKey: ["charity_works"] });
+    try {
+      if (editingId)
+        await adminMutate({ table: "charity_works", op: "update", id: editingId, values: payload });
+      else await adminMutate({ table: "charity_works", op: "insert", values: payload });
+      toast.success("Saved");
+      setDraft(empty);
+      setEditingId(null);
+      qc.invalidateQueries({ queryKey: ["charity_works"] });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
+    }
   };
 
   const remove = async (id: string) => {
     if (!confirm("Delete this initiative?")) return;
-    const { error } = await supabase.from("charity_works").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else qc.invalidateQueries({ queryKey: ["charity_works"] });
+    try {
+      await adminMutate({ table: "charity_works", op: "delete", id });
+      qc.invalidateQueries({ queryKey: ["charity_works"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   return (

@@ -101,11 +101,12 @@ function ArtistsAdmin() {
 
   const remove = async (id: string) => {
     if (!confirm("Delete this artist?")) return;
-    const { error } = await supabase.from("artists").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await adminMutate({ table: "artists", op: "delete", id });
       toast.success("Deleted");
       qc.invalidateQueries({ queryKey: ["artists"] });
+    } catch (e) {
+      toast.error((e as Error).message);
     }
   };
 

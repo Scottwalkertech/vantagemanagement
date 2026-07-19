@@ -347,11 +347,17 @@ function AgentAdmin() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!data) return;
-    const { error } = await supabase.from("agent_profile").update(form).eq("id", data.id);
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await adminMutate({
+        table: "agent_profile",
+        op: "update",
+        id: data.id,
+        values: form,
+      });
       toast.success("Saved");
       qc.invalidateQueries({ queryKey: ["agent-profile"] });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
     }
   };
 

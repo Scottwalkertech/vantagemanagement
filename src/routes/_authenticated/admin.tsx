@@ -286,16 +286,25 @@ function ClientsAdmin() {
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) return;
-    const { error } = await supabase.from("clients").insert({ name, sort_order: data.length + 1 });
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await adminMutate({
+        table: "clients",
+        op: "insert",
+        values: { name, sort_order: data.length + 1 },
+      });
       setName("");
       qc.invalidateQueries({ queryKey: ["clients"] });
+    } catch (e2) {
+      toast.error((e2 as Error).message);
     }
   };
   const remove = async (id: string) => {
-    await supabase.from("clients").delete().eq("id", id);
-    qc.invalidateQueries({ queryKey: ["clients"] });
+    try {
+      await adminMutate({ table: "clients", op: "delete", id });
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   return (

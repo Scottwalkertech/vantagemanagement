@@ -31,11 +31,22 @@ export const Route = createFileRoute("/api/admin/mutate")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const auth = request.headers.get("authorization") ?? "";
-        if (!auth.toLowerCase().startsWith("bearer ")) {
-          return Response.json({ error: "Unauthorized" }, { status: 401 });
+        const rawAuth = request.headers.get("authorization");
+        if (!rawAuth) {
+          console.error("[admin/mutate] Missing Authorization header");
+          return Response.json({ error: "Unauthorized: missing Authorization header" }, { status: 401 });
         }
-        const token = auth.slice(7);
+        if (!rawAuth.toLowerCase().startsWith("bearer ")) {
+          console.error("[admin/mutate] Authorization header is not a Bearer token", {
+            prefix: rawAuth.slice(0, 12),
+          });
+          return Response.json({ error: "Unauthorized: expected Bearer token" }, { status: 401 });
+        }
+        const token = rawAuth.slice(7).trim();
+        if (!token) {
+          console.error("[admin/mutate] Bearer token was empty after extraction");
+          return Response.json({ error: "Unauthorized: empty bearer token" }, { status: 401 });
+        }
 
         // Caller-scoped client to verify identity + admin role via RLS-safe RPC.
         const asUser = createClient<Database>(getDbUrl(), getDbAnonKey(), {
@@ -49,15 +60,25 @@ export const Route = createFileRoute("/api/admin/mutate")({
 
         const { data: userData, error: userErr } = await asUser.auth.getUser();
         if (userErr || !userData.user) {
-          return Response.json({ error: "Unauthorized" }, { status: 401 });
+          console.error("[admin/mutate] Failed to resolve user from token", {
+            message: userErr?.message,
+            status: userErr?.status,
+          });
+          return Response.json({ error: "Unauthorized: token did not resolve to a user" }, { status: 401 });
         }
         const { data: isAdmin, error: roleErr } = await asUser.rpc("has_role", {
           _user_id: userData.user.id,
           _role: "admin",
         });
         if (roleErr || !isAdmin) {
+          console.error("[admin/mutate] has_role check failed or user is not admin", {
+            userId: userData.user.id,
+            roleErr: roleErr?.message,
+            isAdmin,
+          });
           return Response.json({ error: "Forbidden" }, { status: 403 });
         }
+
 
         let body: unknown;
         try {

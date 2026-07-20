@@ -13,11 +13,22 @@ export const Route = createFileRoute("/api/admin/bulk-link")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const auth = request.headers.get("authorization") ?? "";
-        if (!auth.toLowerCase().startsWith("bearer ")) {
-          return Response.json({ error: "Unauthorized" }, { status: 401 });
+        const rawAuth = request.headers.get("authorization");
+        if (!rawAuth) {
+          console.error("[admin/bulk-link] Missing Authorization header");
+          return Response.json({ error: "Unauthorized: missing Authorization header" }, { status: 401 });
         }
-        const token = auth.slice(7);
+        if (!rawAuth.toLowerCase().startsWith("bearer ")) {
+          console.error("[admin/bulk-link] Authorization header is not a Bearer token", {
+            prefix: rawAuth.slice(0, 12),
+          });
+          return Response.json({ error: "Unauthorized: expected Bearer token" }, { status: 401 });
+        }
+        const token = rawAuth.slice(7).trim();
+        if (!token) {
+          console.error("[admin/bulk-link] Bearer token was empty after extraction");
+          return Response.json({ error: "Unauthorized: empty bearer token" }, { status: 401 });
+        }
 
         // Client scoped to the caller's JWT — RLS + has_role apply as the user.
         const sb = createClient<Database>(getDbUrl(), getDbAnonKey(), {
@@ -31,8 +42,13 @@ export const Route = createFileRoute("/api/admin/bulk-link")({
 
         const { data: userData, error: userErr } = await sb.auth.getUser();
         if (userErr || !userData.user) {
-          return Response.json({ error: "Unauthorized" }, { status: 401 });
+          console.error("[admin/bulk-link] Failed to resolve user from token", {
+            message: userErr?.message,
+            status: userErr?.status,
+          });
+          return Response.json({ error: "Unauthorized: token did not resolve to a user" }, { status: 401 });
         }
+
         const { data: isAdmin, error: roleErr } = await sb.rpc("has_role", {
           _user_id: userData.user.id,
           _role: "admin",

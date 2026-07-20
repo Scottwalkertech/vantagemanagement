@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { adminMutate } from "@/lib/admin-api";
+import { ImageUpload, ImageMultiUpload } from "@/components/admin/ImageUpload";
 import {
   agentProfileQuery,
   artistsQuery,
@@ -206,15 +207,15 @@ function ArtistForm({ id, onClose }: { id: string | null; onClose: () => void })
           options={["Active", "On Hold", "Alumni"]}
         />
         <AInput label="Sort order" value={String(form.sort_order)} onChange={(v) => setForm({ ...form, sort_order: Number(v) })} />
-        <AInput label="Cover image URL" value={form.cover_image} onChange={(v) => setForm({ ...form, cover_image: v })} className="md:col-span-2" />
-        <AInput label="Live photo URL" value={form.live_photo_url} onChange={(v) => setForm({ ...form, live_photo_url: v })} className="md:col-span-2" />
+        <ImageUpload label="Cover image" value={form.cover_image} onChange={(v) => setForm({ ...form, cover_image: v })} className="md:col-span-2" />
+        <ImageUpload label="Live photo" value={form.live_photo_url} onChange={(v) => setForm({ ...form, live_photo_url: v })} className="md:col-span-2" />
         <AInput label="Press kit URL (PDF)" value={form.press_kit_url} onChange={(v) => setForm({ ...form, press_kit_url: v })} className="md:col-span-2" />
       </div>
       <ATextarea label="Short bio (1 line)" value={form.short_bio} onChange={(v) => setForm({ ...form, short_bio: v })} rows={2} />
 
       <ATextarea label="Full bio" value={form.bio} onChange={(v) => setForm({ ...form, bio: v })} rows={5} />
       <ATextarea label="Achievements (one per line)" value={form.achievements} onChange={(v) => setForm({ ...form, achievements: v })} rows={4} />
-      <ATextarea label="Gallery (one URL per line)" value={form.gallery} onChange={(v) => setForm({ ...form, gallery: v })} rows={3} />
+      <ImageMultiUpload label="Gallery" value={form.gallery} onChange={(v) => setForm({ ...form, gallery: v })} />
       <div className="flex gap-2 pt-2">
         <button type="submit" className="bg-gold px-4 py-2 text-[10px] font-bold uppercase tracking-[0.3em] text-obsidian">Save</button>
         <button type="button" onClick={onClose} className="border border-pearl/20 px-4 py-2 text-[10px] uppercase tracking-[0.3em]">Cancel</button>
